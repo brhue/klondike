@@ -32,6 +32,25 @@ function shuffle(cards) {
   }
 }
 
+function isValidTableauMove(card, destinationCard) {
+  if (!destinationCard) return card.rank === 'king'
+
+  let isRed = card.suit === 'diamond' || card.suit === 'heart'
+  let isBlack = !isRed
+  let destinationIsRed = destinationCard.suit === 'diamond' || destinationCard.suit === 'heart'
+  let destinationIsBlack = !destinationIsRed
+
+  return (
+    (isRed && destinationIsBlack && ranks[card.rank] === ranks[destinationCard.rank] - 1) ||
+    (isBlack && destinationIsRed && ranks[card.rank] === ranks[destinationCard.rank] - 1)
+  )
+}
+
+function isValidFoundationMove(card, destinationCard) {
+  if (!destinationCard) return card.rank === 'ace'
+  return card.suit === destinationCard.suit && ranks[card.rank] === ranks[destinationCard.rank] + 1
+}
+
 function Card({ rank, suit, style, faceUp, id, isSelected }) {
   return (
     <div
@@ -97,6 +116,7 @@ function App() {
         onClick={(e) => {
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
             if (gameState.stock.length === 0) {
+              // Reset waste to stock
               setGameState((s) => {
                 return {
                   ...s,
@@ -112,6 +132,7 @@ function App() {
                 }
               })
             } else {
+              // Draw from stock to waste
               setGameState((s) => {
                 let card = s.stock.at(-1)
                 card.faceUp = true
@@ -136,7 +157,11 @@ function App() {
 
                   if (isTopCard) {
                     let card = s.tableaux[tIndex][cardIndex]
+                    let destinationCard = s.tableaux[id].at(-1)
 
+                    if (!isValidTableauMove(card, destinationCard)) return { ...s }
+
+                    // Move top card between tableaux
                     return {
                       ...s,
                       tableaux: s.tableaux
@@ -159,6 +184,11 @@ function App() {
                     }
                   } else {
                     let cards = s.tableaux[tIndex].slice(cardIndex)
+                    let card = cards[0]
+                    let destinationCard = s.tableaux[id].at(-1)
+
+                    if (!isValidTableauMove(card, destinationCard)) return { ...s }
+                    // Move card stack between tableaux
                     return {
                       ...s,
                       tableaux: s.tableaux
@@ -182,6 +212,11 @@ function App() {
                   }
                 } else if (containingPile === 'waste') {
                   let card = s.waste.find((c) => c.id === selectedCard.id)
+                  let destinationCard = s.tableaux[id].at(-1)
+
+                  if (!isValidTableauMove(card, destinationCard)) return { ...s }
+
+                  // Move from waste to tableaux
                   return {
                     ...s,
                     waste: s.waste.filter((c) => c.id !== selectedCard.id),
@@ -209,6 +244,11 @@ function App() {
                 if (containingPile === 'tableau') {
                   let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
                   let card = s.tableaux[tIndex].find((c) => c.id === selectedCard.id)
+                  let destinationCard = s.foundations[id].at(-1)
+
+                  if (!isValidFoundationMove(card, destinationCard)) return { ...s }
+
+                  // Move from tableaux to foundation
                   return {
                     ...s,
                     tableaux: s.tableaux.map((t) => {
@@ -230,6 +270,11 @@ function App() {
                   }
                 } else if (containingPile === 'waste') {
                   let card = s.waste.find((c) => c.id === selectedCard.id)
+                  let destinationCard = s.foundations[id].at(-1)
+
+                  if (!isValidFoundationMove(card, destinationCard)) return { ...s }
+
+                  // Move from waste to foundation
                   return {
                     ...s,
                     waste: s.waste.filter((c) => c.id !== selectedCard.id),
