@@ -1,5 +1,28 @@
 import { useState } from 'react'
 
+const rankSymbols = {
+  ace: 'A',
+  two: '2',
+  three: '3',
+  four: '4',
+  five: '5',
+  six: '6',
+  seven: '7',
+  eight: '8',
+  nine: '9',
+  ten: '10',
+  jack: 'J',
+  queen: 'Q',
+  king: 'K',
+}
+
+const suitSymbols = {
+  heart: '♥️',
+  diamond: '♦️',
+  club: '♣️',
+  spade: '♠️',
+}
+
 const ranks = {
   ace: 1,
   two: 2,
@@ -52,6 +75,8 @@ function isValidFoundationMove(card, destinationCard) {
 }
 
 function Card({ rank, suit, style, faceUp, id, isSelected }) {
+  let rankSymbol = rankSymbols[rank]
+  let suitSymnbol = suitSymbols[suit]
   return (
     <div
       className="card"
@@ -60,6 +85,7 @@ function Card({ rank, suit, style, faceUp, id, isSelected }) {
         position: 'absolute',
         width: '75px',
         height: '125px',
+        padding: '2px',
         borderRadius: '4px',
         border: isSelected ? '2px solid gold' : '1px solid black',
         backgroundColor: faceUp ? 'white' : 'green',
@@ -67,7 +93,7 @@ function Card({ rank, suit, style, faceUp, id, isSelected }) {
         ...style,
       }}
     >
-      {faceUp ? `${rank} of ${suit}s` : null}
+      {faceUp ? `${rankSymbol} ${suitSymnbol}` : null}
     </div>
   )
 }
@@ -109,7 +135,11 @@ function App() {
   let { score, stock, waste, foundations, tableaux } = gameState
 
   return (
-    <>
+    <div
+      style={{
+        marginLeft: '2rem',
+      }}
+    >
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
       <div
@@ -346,7 +376,7 @@ function App() {
             style={{
               display: 'flex',
               gap: '1rem',
-              marginRight: '6rem',
+              marginRight: 'calc(1rem + 75px)',
             }}
           >
             <div
@@ -355,11 +385,20 @@ function App() {
                 width: '75px',
                 height: '125px',
                 position: 'relative',
+                border: '1px solid gray',
+                borderRadius: '4px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
-              {stock.map((card) => {
-                return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
-              })}
+              {stock.length ? (
+                stock.map((card) => {
+                  return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
+                })
+              ) : (
+                <p>Reset</p>
+              )}
             </div>
             <div
               className="waste"
@@ -368,6 +407,10 @@ function App() {
                 height: '125px',
                 position: 'relative',
                 border: '1px solid gray',
+                borderRadius: '4px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
               }}
             >
               {waste.map((card) => {
@@ -390,8 +433,12 @@ function App() {
                   key={i}
                   style={{
                     border: '1px solid gray',
+                    borderRadius: '4px',
                     width: '75px',
                     height: '125px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                   }}
                 >
                   {foundation.map((card) => {
@@ -419,18 +466,23 @@ function App() {
                   width: '75px',
                   height: '125px',
                   position: 'relative',
+                  border: '1px solid gray',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
               >
                 {tableau.map((card, i) => {
                   let isSelected = card.id === selectedCard?.id
-                  return <Card key={card.id} {...card} style={{ top: `${i * 15}px` }} isSelected={isSelected} />
+                  return <Card key={card.id} {...card} style={{ top: `${i * 20}px` }} isSelected={isSelected} />
                 })}
               </div>
             )
           })}
         </div>
       </div>
-    </>
+    </div>
   )
 }
 
