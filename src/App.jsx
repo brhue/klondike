@@ -32,21 +32,23 @@ function shuffle(cards) {
   }
 }
 
-function Card({ rank, suit, style }) {
+function Card({ rank, suit, style, faceUp, id, isSelected }) {
   return (
     <div
+      className="card"
+      id={id}
       style={{
-        ...style,
         position: 'absolute',
         width: '75px',
         height: '125px',
         borderRadius: '4px',
-        border: '1px solid black',
-        backgroundColor: 'white',
+        border: isSelected ? '2px solid gold' : '1px solid black',
+        backgroundColor: faceUp ? 'white' : 'green',
         color: suit === suits.spade || suit === suits.club ? 'black' : 'red',
+        ...style,
       }}
     >
-      {rank} of {suit}
+      {faceUp ? `${rank} of ${suit}s` : null}
     </div>
   )
 }
@@ -59,6 +61,7 @@ function App() {
       Object.keys(suits).forEach((suit) => {
         deck.push({
           id: `c${i++}`,
+          faceUp: false,
           rank,
           suit,
         })
@@ -74,18 +77,60 @@ function App() {
 
     for (let i = 1; i < 8; i++) {
       state.tableaux.push(deck.splice(-i))
+      state.tableaux[i - 1].at(-1).faceUp = true
     }
 
     state.stock = deck
     return state
   })
 
+  let [selectedCard, setSelectedCard] = useState()
+
   let { stock, waste, foundations, tableaux } = gameState
 
   return (
     <>
       <h1>Solitaire</h1>
-      <div className="play-area" style={{ userSelect: 'none' }}>
+      <div
+        className="play-area"
+        style={{ userSelect: 'none' }}
+        onClick={(e) => {
+          if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
+          } else if (e.target.matches('.foundation') || e.target.matches('.foundation .card')) {
+            if (selectedCard) {
+              let foundationEl = e.target.matches('.card') ? e.target.parentElement : e.target
+              let id = Number(foundationEl.id.replace('f', ''))
+              setGameState((s) => {
+                let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard))
+                let card = s.tableaux[tIndex].find((c) => c.id === selectedCard)
+                return {
+                  ...s,
+                  tableaux: s.tableaux.map((t) => {
+                    return t
+                      .filter((c) => c.id !== selectedCard)
+                      .map((c, i, a) => {
+                        if (i === a.length - 1) {
+                          return { ...c, faceUp: true }
+                        }
+                        return c
+                      })
+                  }),
+                  foundations: s.foundations.map((f, i) => {
+                    if (i === id) {
+                      return [...f, card]
+                    }
+                    return f
+                  }),
+                }
+              })
+            }
+          } else if (e.target.matches('.card')) {
+            let cardEl = e.target
+            console.log(cardEl)
+            setSelectedCard(cardEl.id)
+          }
+        }}
+      >
         <div
           className="upper-area"
           style={{
@@ -109,7 +154,7 @@ function App() {
               }}
             >
               {stock.map((card) => {
-                return <Card rank={card.rank} suit={card.suit} key={card.id} />
+                return <Card key={card.id} {...card} />
               })}
             </div>
             <div
@@ -122,7 +167,7 @@ function App() {
               }}
             >
               {waste.map((card) => {
-                return <Card rank={card.rank} suit={card.suit} key={card.id} />
+                return <Card key={card.id} {...card} />
               })}
             </div>
           </div>
@@ -136,6 +181,8 @@ function App() {
             {foundations.map((foundation, i) => {
               return (
                 <div
+                  className="foundation"
+                  id={'f' + i}
                   key={i}
                   style={{
                     border: '1px solid gray',
@@ -144,7 +191,7 @@ function App() {
                   }}
                 >
                   {foundation.map((card) => {
-                    return <Card rank={card.rank} suit={card.suit} key={card.id} />
+                    return <Card key={card.id} {...card} />
                   })}
                 </div>
               )
@@ -162,6 +209,8 @@ function App() {
             return (
               <div
                 key={i}
+                id={`t${i}`}
+                className="tableau"
                 style={{
                   width: '75px',
                   height: '125px',
@@ -169,7 +218,8 @@ function App() {
                 }}
               >
                 {tableau.map((card, i) => {
-                  return <Card rank={card.rank} suit={card.suit} key={card.id} style={{ top: `${i * 10}px` }} />
+                  let isSelected = card.id === selectedCard
+                  return <Card key={card.id} {...card} style={{ top: `${i * 10}px` }} isSelected={isSelected} />
                 })}
               </div>
             )
