@@ -260,6 +260,7 @@ function App() {
           style={{
             display: 'flex',
             gap: '1rem',
+            marginBottom: '2rem',
           }}
         >
           <div
@@ -267,6 +268,7 @@ function App() {
             style={{
               display: 'flex',
               gap: '1rem',
+              marginRight: '6rem',
             }}
           >
             <div
