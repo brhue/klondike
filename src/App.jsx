@@ -96,6 +96,40 @@ function App() {
         style={{ userSelect: 'none' }}
         onClick={(e) => {
           if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
+            if (selectedCard) {
+              let tableauEl = e.target.matches('.card') ? e.target.parentElement : e.target
+              let id = Number(tableauEl.id.replace('t', ''))
+              setGameState((s) => {
+                let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard))
+                let card = s.tableaux[tIndex].find((c) => c.id === selectedCard)
+
+                return {
+                  ...s,
+                  tableaux: s.tableaux
+                    .map((t) => {
+                      return t
+                        .filter((c) => c.id !== selectedCard)
+                        .map((c, i, a) => {
+                          if (i === a.length - 1) {
+                            return { ...c, faceUp: true }
+                          }
+                          return c
+                        })
+                    })
+                    .map((t, i) => {
+                      if (i == id) {
+                        return [...t, card]
+                      }
+                      return t
+                    }),
+                }
+              })
+              setSelectedCard(null)
+            } else {
+              if (e.target.matches('.card')) {
+                setSelectedCard(e.target.id)
+              }
+            }
           } else if (e.target.matches('.foundation') || e.target.matches('.foundation .card')) {
             if (selectedCard) {
               let foundationEl = e.target.matches('.card') ? e.target.parentElement : e.target
@@ -123,6 +157,11 @@ function App() {
                   }),
                 }
               })
+              setSelectedCard(null)
+            } else {
+              if (e.target.matches('.card')) {
+                setSelectedCard(e.target.id)
+              }
             }
           } else if (e.target.matches('.card')) {
             let cardEl = e.target
@@ -219,7 +258,7 @@ function App() {
               >
                 {tableau.map((card, i) => {
                   let isSelected = card.id === selectedCard
-                  return <Card key={card.id} {...card} style={{ top: `${i * 10}px` }} isSelected={isSelected} />
+                  return <Card key={card.id} {...card} style={{ top: `${i * 15}px` }} isSelected={isSelected} />
                 })}
               </div>
             )
