@@ -89,6 +89,7 @@ function App() {
     shuffle(deck)
 
     let state = {
+      score: 0,
       foundations: [[], [], [], []],
       waste: [],
       tableaux: [],
@@ -105,11 +106,12 @@ function App() {
 
   let [selectedCard, setSelectedCard] = useState()
 
-  let { stock, waste, foundations, tableaux } = gameState
+  let { score, stock, waste, foundations, tableaux } = gameState
 
   return (
     <>
       <h1>Solitaire</h1>
+      <h2>Score: {score} points</h2>
       <div
         className="play-area"
         style={{ userSelect: 'none' }}
@@ -120,6 +122,8 @@ function App() {
               setGameState((s) => {
                 return {
                   ...s,
+                  // only applies when playing draw 1
+                  score: Math.max(s.score - 100, 0),
                   stock: s.waste
                     .map((card) => {
                       return {
@@ -158,12 +162,15 @@ function App() {
                   if (isTopCard) {
                     let card = s.tableaux[tIndex][cardIndex]
                     let destinationCard = s.tableaux[id].at(-1)
+                    // the card below the selected one
+                    let previousCard = s.tableaux[tIndex].at(cardIndex - 1)
 
                     if (!isValidTableauMove(card, destinationCard)) return { ...s }
 
                     // Move top card between tableaux
                     return {
                       ...s,
+                      score: previousCard?.faceUp ? s.score : s.score + 5,
                       tableaux: s.tableaux
                         .map((t) => {
                           return t
@@ -186,11 +193,14 @@ function App() {
                     let cards = s.tableaux[tIndex].slice(cardIndex)
                     let card = cards[0]
                     let destinationCard = s.tableaux[id].at(-1)
+                    // the card below the selected one
+                    let previousCard = s.tableaux[tIndex].at(cardIndex - 1)
 
                     if (!isValidTableauMove(card, destinationCard)) return { ...s }
                     // Move card stack between tableaux
                     return {
                       ...s,
+                      score: previousCard?.faceUp ? s.score : s.score + 5,
                       tableaux: s.tableaux
                         .map((t) => {
                           return t
@@ -219,9 +229,30 @@ function App() {
                   // Move from waste to tableaux
                   return {
                     ...s,
+                    score: s.score + 5,
                     waste: s.waste.filter((c) => c.id !== selectedCard.id),
                     tableaux: s.tableaux.map((t, i) => {
                       if (i == id) {
+                        return [...t, card]
+                      }
+                      return t
+                    }),
+                  }
+                } else if (containingPile === 'foundation') {
+                  let foundationIndex = s.foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
+                  let card = s.foundations[foundationIndex].find((c) => c.id === selectedCard.id)
+                  let destinationCard = s.tableaux[id].at(-1)
+
+                  if (!isValidTableauMove(card, destinationCard)) return { ...s }
+
+                  return {
+                    ...s,
+                    score: Math.max(s.score - 15, 0),
+                    foundations: s.foundations.map((f) => {
+                      return f.filter((c) => c.id !== selectedCard.id)
+                    }),
+                    tableaux: s.tableaux.map((t, i) => {
+                      if (i === id) {
                         return [...t, card]
                       }
                       return t
@@ -251,6 +282,7 @@ function App() {
                   // Move from tableaux to foundation
                   return {
                     ...s,
+                    score: s.score + 10,
                     tableaux: s.tableaux.map((t) => {
                       return t
                         .filter((c) => c.id !== selectedCard.id)
@@ -277,6 +309,7 @@ function App() {
                   // Move from waste to foundation
                   return {
                     ...s,
+                    score: s.score + 10,
                     waste: s.waste.filter((c) => c.id !== selectedCard.id),
                     foundations: s.foundations.map((f, i) => {
                       if (i === id) {
