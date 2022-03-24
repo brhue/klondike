@@ -131,27 +131,54 @@ function App() {
 
                 if (containingPile === 'tableau') {
                   let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
-                  let card = s.tableaux[tIndex].find((c) => c.id === selectedCard.id)
+                  let cardIndex = s.tableaux[tIndex].findIndex((c) => c.id === selectedCard.id)
+                  let isTopCard = cardIndex === s.tableaux[tIndex].length - 1
 
-                  return {
-                    ...s,
-                    tableaux: s.tableaux
-                      .map((t) => {
-                        return t
-                          .filter((c) => c.id !== selectedCard.id)
-                          .map((c, i, a) => {
-                            if (i === a.length - 1) {
-                              return { ...c, faceUp: true }
-                            }
-                            return c
-                          })
-                      })
-                      .map((t, i) => {
-                        if (i == id) {
-                          return [...t, card]
-                        }
-                        return t
-                      }),
+                  if (isTopCard) {
+                    let card = s.tableaux[tIndex][cardIndex]
+
+                    return {
+                      ...s,
+                      tableaux: s.tableaux
+                        .map((t) => {
+                          return t
+                            .filter((c) => c.id !== selectedCard.id)
+                            .map((c, i, a) => {
+                              if (i === a.length - 1) {
+                                return { ...c, faceUp: true }
+                              }
+                              return c
+                            })
+                        })
+                        .map((t, i) => {
+                          if (i == id) {
+                            return [...t, card]
+                          }
+                          return t
+                        }),
+                    }
+                  } else {
+                    let cards = s.tableaux[tIndex].slice(cardIndex)
+                    return {
+                      ...s,
+                      tableaux: s.tableaux
+                        .map((t) => {
+                          return t
+                            .filter((c) => !cards.includes(c))
+                            .map((c, i, a) => {
+                              if (i === a.length - 1) {
+                                return { ...c, faceUp: true }
+                              }
+                              return c
+                            })
+                        })
+                        .map((t, i) => {
+                          if (i == id) {
+                            return [...t, ...cards]
+                          }
+                          return t
+                        }),
+                    }
                   }
                 } else if (containingPile === 'waste') {
                   let card = s.waste.find((c) => c.id === selectedCard.id)
@@ -222,8 +249,6 @@ function App() {
               }
             }
           } else if (e.target.matches('.card')) {
-            let cardEl = e.target
-            console.log(cardEl)
             setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
           } else {
             setSelectedCard(null)
