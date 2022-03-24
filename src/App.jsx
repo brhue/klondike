@@ -95,7 +95,34 @@ function App() {
         className="play-area"
         style={{ userSelect: 'none' }}
         onClick={(e) => {
-          if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
+          if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
+            if (gameState.stock.length === 0) {
+              setGameState((s) => {
+                return {
+                  ...s,
+                  stock: s.waste
+                    .map((card) => {
+                      return {
+                        ...card,
+                        faceUp: false,
+                      }
+                    })
+                    .reverse(),
+                  waste: [],
+                }
+              })
+            } else {
+              setGameState((s) => {
+                let card = s.stock.at(-1)
+                card.faceUp = true
+                return {
+                  ...s,
+                  stock: s.stock.slice(0, s.stock.length - 1),
+                  waste: [...s.waste, card],
+                }
+              })
+            }
+          } else if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
             if (selectedCard) {
               let tableauEl = e.target.matches('.card') ? e.target.parentElement : e.target
               let id = Number(tableauEl.id.replace('t', ''))
@@ -167,6 +194,8 @@ function App() {
             let cardEl = e.target
             console.log(cardEl)
             setSelectedCard(cardEl.id)
+          } else {
+            setSelectedCard(null)
           }
         }}
       >
@@ -193,7 +222,7 @@ function App() {
               }}
             >
               {stock.map((card) => {
-                return <Card key={card.id} {...card} />
+                return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
               })}
             </div>
             <div
@@ -206,7 +235,7 @@ function App() {
               }}
             >
               {waste.map((card) => {
-                return <Card key={card.id} {...card} />
+                return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
               })}
             </div>
           </div>
@@ -230,7 +259,7 @@ function App() {
                   }}
                 >
                   {foundation.map((card) => {
-                    return <Card key={card.id} {...card} />
+                    return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
                   })}
                 </div>
               )
