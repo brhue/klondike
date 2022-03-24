@@ -127,34 +127,50 @@ function App() {
               let tableauEl = e.target.matches('.card') ? e.target.parentElement : e.target
               let id = Number(tableauEl.id.replace('t', ''))
               setGameState((s) => {
-                let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard))
-                let card = s.tableaux[tIndex].find((c) => c.id === selectedCard)
+                let { containingPile } = selectedCard
 
-                return {
-                  ...s,
-                  tableaux: s.tableaux
-                    .map((t) => {
-                      return t
-                        .filter((c) => c.id !== selectedCard)
-                        .map((c, i, a) => {
-                          if (i === a.length - 1) {
-                            return { ...c, faceUp: true }
-                          }
-                          return c
-                        })
-                    })
-                    .map((t, i) => {
+                if (containingPile === 'tableau') {
+                  let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
+                  let card = s.tableaux[tIndex].find((c) => c.id === selectedCard.id)
+
+                  return {
+                    ...s,
+                    tableaux: s.tableaux
+                      .map((t) => {
+                        return t
+                          .filter((c) => c.id !== selectedCard.id)
+                          .map((c, i, a) => {
+                            if (i === a.length - 1) {
+                              return { ...c, faceUp: true }
+                            }
+                            return c
+                          })
+                      })
+                      .map((t, i) => {
+                        if (i == id) {
+                          return [...t, card]
+                        }
+                        return t
+                      }),
+                  }
+                } else if (containingPile === 'waste') {
+                  let card = s.waste.find((c) => c.id === selectedCard.id)
+                  return {
+                    ...s,
+                    waste: s.waste.filter((c) => c.id !== selectedCard.id),
+                    tableaux: s.tableaux.map((t, i) => {
                       if (i == id) {
                         return [...t, card]
                       }
                       return t
                     }),
+                  }
                 }
               })
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
-                setSelectedCard(e.target.id)
+                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
               }
             }
           } else if (e.target.matches('.foundation') || e.target.matches('.foundation .card')) {
@@ -162,38 +178,53 @@ function App() {
               let foundationEl = e.target.matches('.card') ? e.target.parentElement : e.target
               let id = Number(foundationEl.id.replace('f', ''))
               setGameState((s) => {
-                let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard))
-                let card = s.tableaux[tIndex].find((c) => c.id === selectedCard)
-                return {
-                  ...s,
-                  tableaux: s.tableaux.map((t) => {
-                    return t
-                      .filter((c) => c.id !== selectedCard)
-                      .map((c, i, a) => {
-                        if (i === a.length - 1) {
-                          return { ...c, faceUp: true }
-                        }
-                        return c
-                      })
-                  }),
-                  foundations: s.foundations.map((f, i) => {
-                    if (i === id) {
-                      return [...f, card]
-                    }
-                    return f
-                  }),
+                let { containingPile } = selectedCard
+                if (containingPile === 'tableau') {
+                  let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
+                  let card = s.tableaux[tIndex].find((c) => c.id === selectedCard.id)
+                  return {
+                    ...s,
+                    tableaux: s.tableaux.map((t) => {
+                      return t
+                        .filter((c) => c.id !== selectedCard.id)
+                        .map((c, i, a) => {
+                          if (i === a.length - 1) {
+                            return { ...c, faceUp: true }
+                          }
+                          return c
+                        })
+                    }),
+                    foundations: s.foundations.map((f, i) => {
+                      if (i === id) {
+                        return [...f, card]
+                      }
+                      return f
+                    }),
+                  }
+                } else if (containingPile === 'waste') {
+                  let card = s.waste.find((c) => c.id === selectedCard.id)
+                  return {
+                    ...s,
+                    waste: s.waste.filter((c) => c.id !== selectedCard.id),
+                    foundations: s.foundations.map((f, i) => {
+                      if (i === id) {
+                        return [...f, card]
+                      }
+                      return f
+                    }),
+                  }
                 }
               })
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
-                setSelectedCard(e.target.id)
+                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
               }
             }
           } else if (e.target.matches('.card')) {
             let cardEl = e.target
             console.log(cardEl)
-            setSelectedCard(cardEl.id)
+            setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
           } else {
             setSelectedCard(null)
           }
@@ -222,7 +253,7 @@ function App() {
               }}
             >
               {stock.map((card) => {
-                return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
+                return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
               })}
             </div>
             <div
@@ -235,7 +266,7 @@ function App() {
               }}
             >
               {waste.map((card) => {
-                return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
+                return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
               })}
             </div>
           </div>
@@ -259,7 +290,7 @@ function App() {
                   }}
                 >
                   {foundation.map((card) => {
-                    return <Card key={card.id} {...card} isSelected={card.id === selectedCard} />
+                    return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
                   })}
                 </div>
               )
@@ -286,7 +317,7 @@ function App() {
                 }}
               >
                 {tableau.map((card, i) => {
-                  let isSelected = card.id === selectedCard
+                  let isSelected = card.id === selectedCard?.id
                   return <Card key={card.id} {...card} style={{ top: `${i * 15}px` }} isSelected={isSelected} />
                 })}
               </div>
