@@ -106,38 +106,41 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
   )
 }
 
-function App() {
-  const [gameState, setGameState] = useState(() => {
-    let deck = []
-    let i = 1
-    Object.keys(ranks).forEach((rank) => {
-      Object.keys(suits).forEach((suit) => {
-        deck.push({
-          id: `c${i++}`,
-          faceUp: false,
-          rank,
-          suit,
-        })
+function createInitialState() {
+  let deck = []
+  let i = 1
+  Object.keys(ranks).forEach((rank) => {
+    Object.keys(suits).forEach((suit) => {
+      deck.push({
+        id: `c${i++}`,
+        faceUp: false,
+        rank,
+        suit,
       })
     })
-    shuffle(deck)
-
-    let state = {
-      score: 0,
-      foundations: [[], [], [], []],
-      waste: [],
-      tableaux: [],
-    }
-
-    for (let i = 1; i < 8; i++) {
-      state.tableaux.push(deck.splice(-i))
-      state.tableaux[i - 1].at(-1).faceUp = true
-    }
-
-    state.stock = deck
-    return state
   })
+  shuffle(deck)
 
+  let state = {
+    score: 0,
+    foundations: [[], [], [], []],
+    waste: [],
+    tableaux: [],
+  }
+
+  for (let i = 1; i < 8; i++) {
+    state.tableaux.push(deck.splice(-i))
+    state.tableaux[i - 1].at(-1).faceUp = true
+  }
+
+  state.stock = deck
+  return state
+}
+
+function App() {
+  const [gameState, setGameState] = useState(createInitialState)
+
+  let [drawMode, setDrawMode] = useState(3)
   let [selectedCard, setSelectedCard] = useState()
 
   let { score, stock, waste, foundations, tableaux } = gameState
@@ -184,6 +187,26 @@ function App() {
     >
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
+      <p>
+        <button
+          onClick={(e) => {
+            setDrawMode(1)
+            setGameState(createInitialState())
+          }}
+          disabled={drawMode === 1}
+        >
+          Draw 1
+        </button>
+        <button
+          onClick={(e) => {
+            setDrawMode(3)
+            setGameState(createInitialState())
+          }}
+          disabled={drawMode === 3}
+        >
+          Draw 3
+        </button>
+      </p>
       <div
         className="play-area"
         style={{ userSelect: 'none' }}
@@ -195,7 +218,7 @@ function App() {
                 return {
                   ...s,
                   // only applies when playing draw 1
-                  score: Math.max(s.score - 100, 0),
+                  score: drawMode === 1 ? Math.max(s.score - 100, 0) : s.score,
                   stock: s.waste
                     .map((card) => {
                       return {
@@ -210,12 +233,15 @@ function App() {
             } else {
               // Draw from stock to waste
               setGameState((s) => {
-                let card = s.stock.at(-1)
-                card.faceUp = true
+                let cards = s.stock
+                  .slice(-drawMode)
+                  .map((c) => ({ ...c, faceUp: true }))
+                  .reverse()
+                // card.faceUp = true
                 return {
                   ...s,
-                  stock: s.stock.slice(0, s.stock.length - 1),
-                  waste: [...s.waste, card],
+                  stock: s.stock.slice(0, -drawMode),
+                  waste: [...s.waste, ...cards],
                 }
               })
             }
@@ -455,7 +481,20 @@ function App() {
                 alignItems: 'center',
               }}
             >
-              {waste.map((card) => {
+              {waste.map((card, i) => {
+                if (drawMode === 3) {
+                  let isTopThree = waste.length - i < 3
+                  return (
+                    <Card
+                      key={card.id}
+                      {...card}
+                      isSelected={card.id === selectedCard?.id}
+                      style={{
+                        left: `${isTopThree ? (i - waste.length + 3) * 15 : 0}px`,
+                      }}
+                    />
+                  )
+                }
                 return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
               })}
             </div>
