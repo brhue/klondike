@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useReducer, useCallback } from 'react'
 
 const rankSymbols = {
   ace: 'A',
@@ -122,6 +122,7 @@ function createInitialState() {
   shuffle(deck)
 
   let state = {
+    drawMode: 3,
     score: 0,
     foundations: [[], [], [], []],
     waste: [],
@@ -137,31 +138,41 @@ function createInitialState() {
   return state
 }
 
-function App() {
-  const [gameState, setGameState] = useState(createInitialState)
-
-  let [drawMode, setDrawMode] = useState(3)
-  let [selectedCard, setSelectedCard] = useState()
-
-  let { score, stock, waste, foundations, tableaux } = gameState
-
-  function handleCardDoubleClick(card) {
-    if (!card.faceUp) return
-    let targetFoundation
-    setGameState((s) => {
-      if (card.rank === 'ace') {
-        targetFoundation = s.foundations.findIndex((f) => f.length === 0)
-      } else {
-        targetFoundation = s.foundations.findIndex((f) => f.some((c) => isValidFoundationMove(card, c)))
-      }
-      if (targetFoundation === -1) return { ...s }
-
+function klondikeReducer(state, action) {
+  switch (action.type) {
+    case 'move_foundation_to_foundation':
       return {
-        ...s,
-        score: s.score + 10,
-        tableaux: s.tableaux.map((t) => {
+        ...state,
+        foundations: state.foundations
+          .map((f) => {
+            return f.filter((c) => c.id !== action.card.id)
+          })
+          .map((f, i) => {
+            if (i === action.targetId) {
+              return [...f, action.card]
+            }
+            return f
+          }),
+      }
+    case 'move_waste_to_foundation':
+      return {
+        ...state,
+        score: state.score + 10,
+        waste: state.waste.filter((c) => c.id !== action.card.id),
+        foundations: state.foundations.map((f, i) => {
+          if (i === action.targetId) {
+            return [...f, action.card]
+          }
+          return f
+        }),
+      }
+    case 'move_tableau_to_foundation':
+      return {
+        ...state,
+        score: state.score + 10,
+        tableaux: state.tableaux.map((t) => {
           return t
-            .filter((c) => c.id !== card.id)
+            .filter((c) => c.id !== action.card.id)
             .map((c, i, a) => {
               if (i === a.length - 1) {
                 return { ...c, faceUp: true }
@@ -169,14 +180,122 @@ function App() {
               return c
             })
         }),
-        foundations: s.foundations.map((f, i) => {
-          if (i === targetFoundation) {
-            return [...f, card]
+        foundations: state.foundations.map((f, i) => {
+          if (i === action.targetId) {
+            return [...f, action.card]
           }
           return f
         }),
       }
-    })
+    case 'move_foundation_to_tableau':
+      return {
+        ...state,
+        score: Math.max(state.score - 15, 0),
+        foundations: state.foundations.map((f) => {
+          return f.filter((c) => c.id !== action.card.id)
+        }),
+        tableaux: state.tableaux.map((t, i) => {
+          if (i === action.targetId) {
+            return [...t, action.card]
+          }
+          return t
+        }),
+      }
+    case 'move_waste_to_tableau':
+      return {
+        ...state,
+        score: state.score + 5,
+        waste: state.waste.filter((c) => c.id !== action.card.id),
+        tableaux: state.tableaux.map((t, i) => {
+          if (i == action.targetId) {
+            return [...t, action.card]
+          }
+          return t
+        }),
+      }
+    case 'move_stack_to_tableau':
+      return {
+        ...state,
+        score: action.previousCard?.faceUp ? state.score : state.score + 5,
+        tableaux: state.tableaux
+          .map((t) => {
+            return t
+              .filter((c) => !action.cards.includes(c))
+              .map((c, i, a) => {
+                if (i === a.length - 1) {
+                  return { ...c, faceUp: true }
+                }
+                return c
+              })
+          })
+          .map((t, i) => {
+            if (i == action.targetId) {
+              return [...t, ...action.cards]
+            }
+            return t
+          }),
+      }
+    case 'change_draw_mode':
+      let initialState = createInitialState()
+      return {
+        ...initialState,
+        drawMode: action.value,
+      }
+    case 'reset_waste':
+      return {
+        ...state,
+        score: state.drawMode === 1 ? Math.max(state.score - 100, 0) : state.score,
+        stock: state.waste
+          .map((card) => {
+            return {
+              ...card,
+              faceUp: false,
+            }
+          })
+          .reverse(),
+        waste: [],
+      }
+    case 'draw': {
+      let cards = state.stock
+        .slice(-state.drawMode)
+        .map((c) => ({ ...c, faceUp: true }))
+        .reverse()
+      return {
+        ...state,
+        stock: state.stock.slice(0, -state.drawMode),
+        waste: [...state.waste, ...cards],
+      }
+    }
+    case 'invalid_move':
+      return { ...state }
+  }
+  throw Error('Unknown action: ' + action.type)
+}
+
+function App() {
+  let [state, dispatch] = useReducer(klondikeReducer, null, createInitialState)
+
+  let [selectedCard, setSelectedCard] = useState()
+
+  let { score, stock, waste, foundations, tableaux, drawMode } = state
+
+  function handleCardDoubleClick(card) {
+    if (!card.faceUp) return
+    let targetFoundation
+    if (card.rank === 'ace') {
+      targetFoundation = foundations.findIndex((f) => f.length === 0)
+    } else {
+      targetFoundation = foundations.findIndex((f) => f.some((c) => isValidFoundationMove(card, c)))
+    }
+    if (targetFoundation === -1) {
+      dispatch({ type: 'invalid_move' })
+    } else {
+      dispatch({
+        type: 'move_tableau_to_foundation',
+        targetId: targetFoundation,
+        card,
+      })
+    }
   }
 
   return (
@@ -190,8 +309,7 @@ function App() {
       <p>
         <button
           onClick={(e) => {
-            setDrawMode(1)
-            setGameState(createInitialState())
+            dispatch({ type: 'change_draw_mode', value: 1 })
           }}
           disabled={drawMode === 1}
         >
@@ -199,8 +317,7 @@ function App() {
         </button>
         <button
           onClick={(e) => {
-            setDrawMode(3)
-            setGameState(createInitialState())
+            dispatch({ type: 'change_draw_mode', value: 3 })
           }}
           disabled={drawMode === 3}
         >
@@ -212,152 +329,64 @@ function App() {
         style={{ userSelect: 'none' }}
         onClick={(e) => {
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
-            if (gameState.stock.length === 0) {
-              // Reset waste to stock
-              setGameState((s) => {
-                return {
-                  ...s,
-                  // only applies when playing draw 1
-                  score: drawMode === 1 ? Math.max(s.score - 100, 0) : s.score,
-                  stock: s.waste
-                    .map((card) => {
-                      return {
-                        ...card,
-                        faceUp: false,
-                      }
-                    })
-                    .reverse(),
-                  waste: [],
-                }
-              })
+            if (state.stock.length === 0) {
+              dispatch({ type: 'reset_waste' })
             } else {
-              // Draw from stock to waste
-              setGameState((s) => {
-                let cards = s.stock
-                  .slice(-drawMode)
-                  .map((c) => ({ ...c, faceUp: true }))
-                  .reverse()
-                // card.faceUp = true
-                return {
-                  ...s,
-                  stock: s.stock.slice(0, -drawMode),
-                  waste: [...s.waste, ...cards],
-                }
-              })
+              dispatch({ type: 'draw' })
             }
           } else if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
             if (selectedCard) {
               let tableauEl = e.target.matches('.card') ? e.target.parentElement : e.target
               let id = Number(tableauEl.id.replace('t', ''))
-              setGameState((s) => {
-                let { containingPile } = selectedCard
+              let { containingPile } = selectedCard
 
-                if (containingPile === 'tableau') {
-                  let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
-                  let cardIndex = s.tableaux[tIndex].findIndex((c) => c.id === selectedCard.id)
-                  let isTopCard = cardIndex === s.tableaux[tIndex].length - 1
+              if (containingPile === 'tableau') {
+                let tIndex = tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
+                let cardIndex = tableaux[tIndex].findIndex((c) => c.id === selectedCard.id)
+                let cards = tableaux[tIndex].slice(cardIndex)
+                let card = cards[0]
+                let destinationCard = tableaux[id].at(-1)
+                // the card below the selected one
+                let previousCard = tableaux[tIndex].at(cardIndex - 1)
 
-                  if (isTopCard) {
-                    let card = s.tableaux[tIndex][cardIndex]
-                    let destinationCard = s.tableaux[id].at(-1)
-                    // the card below the selected one
-                    let previousCard = s.tableaux[tIndex].at(cardIndex - 1)
-
-                    if (!isValidTableauMove(card, destinationCard)) return { ...s }
-
-                    // Move top card between tableaux
-                    return {
-                      ...s,
-                      score: previousCard?.faceUp ? s.score : s.score + 5,
-                      tableaux: s.tableaux
-                        .map((t) => {
-                          return t
-                            .filter((c) => c.id !== selectedCard.id)
-                            .map((c, i, a) => {
-                              if (i === a.length - 1) {
-                                return { ...c, faceUp: true }
-                              }
-                              return c
-                            })
-                        })
-                        .map((t, i) => {
-                          if (i == id) {
-                            return [...t, card]
-                          }
-                          return t
-                        }),
-                    }
-                  } else {
-                    let cards = s.tableaux[tIndex].slice(cardIndex)
-                    let card = cards[0]
-                    let destinationCard = s.tableaux[id].at(-1)
-                    // the card below the selected one
-                    let previousCard = s.tableaux[tIndex].at(cardIndex - 1)
-
-                    if (!isValidTableauMove(card, destinationCard)) return { ...s }
-                    // Move card stack between tableaux
-                    return {
-                      ...s,
-                      score: previousCard?.faceUp ? s.score : s.score + 5,
-                      tableaux: s.tableaux
-                        .map((t) => {
-                          return t
-                            .filter((c) => !cards.includes(c))
-                            .map((c, i, a) => {
-                              if (i === a.length - 1) {
-                                return { ...c, faceUp: true }
-                              }
-                              return c
-                            })
-                        })
-                        .map((t, i) => {
-                          if (i == id) {
-                            return [...t, ...cards]
-                          }
-                          return t
-                        }),
-                    }
-                  }
-                } else if (containingPile === 'waste') {
-                  let card = s.waste.find((c) => c.id === selectedCard.id)
-                  let destinationCard = s.tableaux[id].at(-1)
-
-                  if (!isValidTableauMove(card, destinationCard)) return { ...s }
-
-                  // Move from waste to tableaux
-                  return {
-                    ...s,
-                    score: s.score + 5,
-                    waste: s.waste.filter((c) => c.id !== selectedCard.id),
-                    tableaux: s.tableaux.map((t, i) => {
-                      if (i == id) {
-                        return [...t, card]
-                      }
-                      return t
-                    }),
-                  }
-                } else if (containingPile === 'foundation') {
-                  let foundationIndex = s.foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
-                  let card = s.foundations[foundationIndex].find((c) => c.id === selectedCard.id)
-                  let destinationCard = s.tableaux[id].at(-1)
-
-                  if (!isValidTableauMove(card, destinationCard)) return { ...s }
-
-                  return {
-                    ...s,
-                    score: Math.max(s.score - 15, 0),
-                    foundations: s.foundations.map((f) => {
-                      return f.filter((c) => c.id !== selectedCard.id)
-                    }),
-                    tableaux: s.tableaux.map((t, i) => {
-                      if (i === id) {
-                        return [...t, card]
-                      }
-                      return t
-                    }),
-                  }
+                if (!isValidTableauMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_stack_to_tableau',
+                    targetId: id,
+                    previousCard,
+                    cards,
+                  })
                 }
-              })
+              } else if (containingPile === 'waste') {
+                let card = waste.find((c) => c.id === selectedCard.id)
+                let destinationCard = tableaux[id].at(-1)
+
+                if (!isValidTableauMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_waste_to_tableau',
+                    targetId: id,
+                    card,
+                  })
+                }
+              } else if (containingPile === 'foundation') {
+                let foundationIndex = foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
+                let card = foundations[foundationIndex].find((c) => c.id === selectedCard.id)
+                let destinationCard = tableaux[id].at(-1)
+
+                if (!isValidTableauMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_foundation_to_tableau',
+                    targetId: id,
+                    card,
+                  })
+                }
+              }
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
@@ -368,56 +397,49 @@ function App() {
             if (selectedCard) {
               let foundationEl = e.target.matches('.card') ? e.target.parentElement : e.target
               let id = Number(foundationEl.id.replace('f', ''))
-              setGameState((s) => {
-                let { containingPile } = selectedCard
-                if (containingPile === 'tableau') {
-                  let tIndex = s.tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
-                  let card = s.tableaux[tIndex].find((c) => c.id === selectedCard.id)
-                  let destinationCard = s.foundations[id].at(-1)
+              let { containingPile } = selectedCard
+              if (containingPile === 'tableau') {
+                let tIndex = tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
+                let card = tableaux[tIndex].find((c) => c.id === selectedCard.id)
+                let destinationCard = foundations[id].at(-1)
 
-                  if (!isValidFoundationMove(card, destinationCard)) return { ...s }
-
-                  // Move from tableaux to foundation
-                  return {
-                    ...s,
-                    score: s.score + 10,
-                    tableaux: s.tableaux.map((t) => {
-                      return t
-                        .filter((c) => c.id !== selectedCard.id)
-                        .map((c, i, a) => {
-                          if (i === a.length - 1) {
-                            return { ...c, faceUp: true }
-                          }
-                          return c
-                        })
-                    }),
-                    foundations: s.foundations.map((f, i) => {
-                      if (i === id) {
-                        return [...f, card]
-                      }
-                      return f
-                    }),
-                  }
-                } else if (containingPile === 'waste') {
-                  let card = s.waste.find((c) => c.id === selectedCard.id)
-                  let destinationCard = s.foundations[id].at(-1)
-
-                  if (!isValidFoundationMove(card, destinationCard)) return { ...s }
-
-                  // Move from waste to foundation
-                  return {
-                    ...s,
-                    score: s.score + 10,
-                    waste: s.waste.filter((c) => c.id !== selectedCard.id),
-                    foundations: s.foundations.map((f, i) => {
-                      if (i === id) {
-                        return [...f, card]
-                      }
-                      return f
-                    }),
-                  }
+                if (!isValidFoundationMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_tableau_to_foundation',
+                    targetId: id,
+                    card,
+                  })
                 }
-              })
+              } else if (containingPile === 'waste') {
+                let card = waste.find((c) => c.id === selectedCard.id)
+                let destinationCard = foundations[id].at(-1)
+
+                if (!isValidFoundationMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_waste_to_foundation',
+                    targetId: id,
+                    card,
+                  })
+                }
+              } else if (containingPile === 'foundation') {
+                let foundationIndex = foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
+                let card = foundations[foundationIndex].find((c) => c.id === selectedCard.id)
+                let destinationCard = foundations[id].at(-1)
+
+                if (!isValidFoundationMove(card, destinationCard)) {
+                  dispatch({ type: 'invalid_move' })
+                } else {
+                  dispatch({
+                    type: 'move_foundation_to_foundation',
+                    targetId: id,
+                    card,
+                  })
+                }
+              }
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
