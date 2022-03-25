@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react'
+import { useReducer, useState, useEffect } from 'react'
 const rankSymbols = {
   ace: 'A',
   two: '2',
@@ -126,6 +126,8 @@ function createInitialState() {
     foundations: [[], [], [], []],
     waste: [],
     tableaux: [],
+    startTime: Date.now(),
+    duration: 0,
   }
 
   for (let i = 1; i < 8; i++) {
@@ -267,6 +269,11 @@ function klondikeReducer(state, action) {
     }
     case 'invalid_move':
       return { ...state }
+    case 'update_duration':
+      return {
+        ...state,
+        duration: state.duration + 1,
+      }
   }
   throw Error('Unknown action: ' + action.type)
 }
@@ -277,6 +284,19 @@ function KlondikeSolitaire() {
   let [selectedCard, setSelectedCard] = useState()
 
   let { score, stock, waste, foundations, tableaux, drawMode } = state
+
+  let checkIsGameOver = (foundations) => foundations.every((f) => f.length === 13)
+  let isGameOver = checkIsGameOver(foundations)
+  let finalScore = isGameOver ? score + Math.round(700_000 / state.duration) : score
+  useEffect(() => {
+    if (isGameOver) return
+    let id = setInterval(() => {
+      dispatch({ type: 'update_duration' })
+    }, 1000)
+    return () => {
+      clearInterval(id)
+    }
+  }, [isGameOver])
 
   function handleCardDoubleClick(card) {
     if (!card.faceUp) return
@@ -305,6 +325,13 @@ function KlondikeSolitaire() {
     >
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
+      <h2>Duration: {state.duration}</h2>
+      {isGameOver ? (
+        <div>
+          <h3>You win!</h3>
+          <h3>Final score is: {finalScore}</h3>
+        </div>
+      ) : null}
       <p>
         <button
           onClick={(e) => {
