@@ -74,7 +74,7 @@ function isValidFoundationMove(card, destinationCard) {
   return card.suit === destinationCard.suit && ranks[card.rank] === ranks[destinationCard.rank] + 1
 }
 
-function Card({ rank, suit, style, faceUp, id, isSelected }) {
+function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) {
   let rankSymbol = rankSymbols[rank]
   let suitSymnbol = suitSymbols[suit]
   return (
@@ -91,6 +91,14 @@ function Card({ rank, suit, style, faceUp, id, isSelected }) {
         backgroundColor: faceUp ? 'white' : 'green',
         color: suit === suits.spade || suit === suits.club ? 'black' : 'red',
         ...style,
+      }}
+      onDoubleClick={() => {
+        handleDoubleClick({
+          rank,
+          suit,
+          faceUp,
+          id,
+        })
       }}
     >
       {faceUp ? `${rankSymbol} ${suitSymnbol}` : null}
@@ -133,6 +141,40 @@ function App() {
   let [selectedCard, setSelectedCard] = useState()
 
   let { score, stock, waste, foundations, tableaux } = gameState
+
+  function handleCardDoubleClick(card) {
+    if (!card.faceUp) return
+    let targetFoundation
+    setGameState((s) => {
+      if (card.rank === 'ace') {
+        targetFoundation = s.foundations.findIndex((f) => f.length === 0)
+      } else {
+        targetFoundation = s.foundations.findIndex((f) => f.some((c) => isValidFoundationMove(card, c)))
+      }
+      if (targetFoundation === -1) return { ...s }
+
+      return {
+        ...s,
+        score: s.score + 10,
+        tableaux: s.tableaux.map((t) => {
+          return t
+            .filter((c) => c.id !== card.id)
+            .map((c, i, a) => {
+              if (i === a.length - 1) {
+                return { ...c, faceUp: true }
+              }
+              return c
+            })
+        }),
+        foundations: s.foundations.map((f, i) => {
+          if (i === targetFoundation) {
+            return [...f, card]
+          }
+          return f
+        }),
+      }
+    })
+  }
 
   return (
     <div
@@ -475,7 +517,15 @@ function App() {
               >
                 {tableau.map((card, i) => {
                   let isSelected = card.id === selectedCard?.id
-                  return <Card key={card.id} {...card} style={{ top: `${i * 20}px` }} isSelected={isSelected} />
+                  return (
+                    <Card
+                      key={card.id}
+                      {...card}
+                      style={{ top: `${i * 20}px` }}
+                      isSelected={isSelected}
+                      handleDoubleClick={handleCardDoubleClick}
+                    />
+                  )
                 })}
               </div>
             )
