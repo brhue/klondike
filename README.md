@@ -10,7 +10,7 @@
 
 - [] Time based scoring mode
 - [] Add scoreboard of most recent wins (last five or ten?)
-- [] Refactor to useReducer for main klondike state
+- [x] Refactor to useReducer for main klondike state
 - [] New game confirmation when in the middle of a game
 - [] Drag and drop controls (with option to switch between perhaps)
 - [] Figure out what's needed to make it installable (a PWA)
