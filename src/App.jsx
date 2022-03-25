@@ -552,6 +552,7 @@ function App() {
                   display: 'flex',
                   justifyContent: 'center',
                   alignItems: 'center',
+                  flexShrink: 0,
                 }}
               >
                 {tableau.map((card, i) => {
