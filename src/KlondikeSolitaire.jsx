@@ -1,5 +1,6 @@
 import { useReducer, useState, useEffect } from 'react'
 import GameOverModal from './GameOverModal'
+import Button from './Button'
 
 const rankSymbols = {
   ace: 'A',
@@ -325,28 +326,28 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
   return (
     <div className="md:px-8">
       <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
-        <button onClick={onNewGame}>New Game</button>
+        <Button onClick={onNewGame}>New Game</Button>
       </GameOverModal>
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
       <h2>Duration: {duration}</h2>
       <p>
-        <button
+        <Button
           onClick={(e) => {
             dispatch({ type: 'change_draw_mode', value: 1 })
           }}
           disabled={drawMode === 1}
         >
           Draw 1
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={(e) => {
             dispatch({ type: 'change_draw_mode', value: 3 })
           }}
           disabled={drawMode === 3}
         >
           Draw 3
-        </button>
+        </Button>
       </p>
       <div
         className="play-area"
