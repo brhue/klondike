@@ -553,6 +553,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
         </div>
         <div className="tableaux flex gap-1 md:gap-4 justify-center">
           {tableaux.map((tableau, i) => {
+            let inStack = false
             return (
               <div
                 key={i}
@@ -570,12 +571,13 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
               >
                 {tableau.map((card, i) => {
                   let isSelected = card.id === selectedCard?.id
+                  if (isSelected) inStack = true
                   return (
                     <Card
                       key={card.id}
                       {...card}
                       style={{ top: `${i * 20}px` }}
-                      isSelected={isSelected}
+                      isSelected={inStack || isSelected}
                       handleDoubleClick={handleCardDoubleClick}
                     />
                   )
