@@ -7,6 +7,9 @@ function App() {
     drawOne: [],
     drawThree: [],
   })
+  let [version, setVersion] = useState(0)
+
+  const reset = () => setVersion((v) => v + 1)
   const addScore = (score) =>
     setScores((s) => {
       return score.drawMode === 1
@@ -19,7 +22,7 @@ function App() {
             drawThree: [...s.drawThree.slice(-9), score],
           }
     })
-  return <KlondikeSolitaire updateScores={addScore} />
+  return <KlondikeSolitaire key={version} updateScores={addScore} scores={scores} onNewGame={reset} />
 }
 
 export default App

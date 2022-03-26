@@ -1,4 +1,6 @@
 import { useReducer, useState, useEffect } from 'react'
+import GameOverModal from './GameOverModal'
+
 const rankSymbols = {
   ace: 'A',
   two: '2',
@@ -278,7 +280,7 @@ function klondikeReducer(state, action) {
   throw Error('Unknown action: ' + action.type)
 }
 
-function KlondikeSolitaire({ updateScores }) {
+function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
   let [state, dispatch] = useReducer(klondikeReducer, null, createInitialState)
 
   let [selectedCard, setSelectedCard] = useState()
@@ -331,15 +333,12 @@ function KlondikeSolitaire({ updateScores }) {
         marginLeft: '2rem',
       }}
     >
+      <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
+        <button onClick={onNewGame}>New Game</button>
+      </GameOverModal>
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
       <h2>Duration: {duration}</h2>
-      {isGameOver ? (
-        <div>
-          <h3>You win!</h3>
-          <h3>Final score is: {finalScore}</h3>
-        </div>
-      ) : null}
       <p>
         <button
           onClick={(e) => {
