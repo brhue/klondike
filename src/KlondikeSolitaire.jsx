@@ -278,18 +278,26 @@ function klondikeReducer(state, action) {
   throw Error('Unknown action: ' + action.type)
 }
 
-function KlondikeSolitaire() {
+function KlondikeSolitaire({ updateScores }) {
   let [state, dispatch] = useReducer(klondikeReducer, null, createInitialState)
 
   let [selectedCard, setSelectedCard] = useState()
 
-  let { score, stock, waste, foundations, tableaux, drawMode } = state
+  let { duration, score, stock, waste, foundations, tableaux, drawMode } = state
 
   let checkIsGameOver = (foundations) => foundations.every((f) => f.length === 13)
   let isGameOver = checkIsGameOver(foundations)
-  let finalScore = isGameOver ? score + Math.round(700_000 / state.duration) : score
+  let finalScore = isGameOver ? score + Math.round(700_000 / duration) : score
   useEffect(() => {
-    if (isGameOver) return
+    if (isGameOver) {
+      updateScores({
+        score: finalScore,
+        date: Date.now(),
+        duration,
+        drawMode,
+      })
+      return
+    }
     let id = setInterval(() => {
       dispatch({ type: 'update_duration' })
     }, 1000)
@@ -325,7 +333,7 @@ function KlondikeSolitaire() {
     >
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
-      <h2>Duration: {state.duration}</h2>
+      <h2>Duration: {duration}</h2>
       {isGameOver ? (
         <div>
           <h3>You win!</h3>
