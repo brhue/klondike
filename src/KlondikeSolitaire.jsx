@@ -80,14 +80,9 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
   let suitSymnbol = suitSymbols[suit]
   return (
     <div
-      className="card"
+      className="card absolute w-[50px] md:w-[75px] h-[100px] md:h-[125px] p-0.5 rounded-md"
       id={id}
       style={{
-        position: 'absolute',
-        width: '75px',
-        height: '125px',
-        padding: '2px',
-        borderRadius: '4px',
         border: isSelected ? '2px solid gold' : '1px solid black',
         backgroundColor: faceUp ? 'white' : 'green',
         color: suit === suits.spade || suit === suits.club ? 'black' : 'red',
@@ -328,11 +323,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
   }
 
   return (
-    <div
-      style={{
-        marginLeft: '2rem',
-      }}
-    >
+    <div className="md:px-8">
       <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
         <button onClick={onNewGame}>New Game</button>
       </GameOverModal>
@@ -423,7 +414,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
-                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
+                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.dataset.pile })
               }
             }
           } else if (e.target.matches('.foundation') || e.target.matches('.foundation .card')) {
@@ -476,38 +467,22 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
               setSelectedCard(null)
             } else {
               if (e.target.matches('.card')) {
-                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
+                setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.dataset.pile })
               }
             }
           } else if (e.target.matches('.card')) {
-            setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.className })
+            setSelectedCard({ id: e.target.id, containingPile: e.target.parentElement.dataset.pile })
           } else {
             setSelectedCard(null)
           }
         }}
       >
-        <div
-          className="upper-area"
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            marginBottom: '2rem',
-          }}
-        >
-          <div
-            className="stock-waste"
-            style={{
-              display: 'flex',
-              gap: '1rem',
-              marginRight: 'calc(1rem + 75px)',
-            }}
-          >
+        <div className="upper-area flex gap-1 md:gap-4 mb-8 justify-center">
+          <div className="stock-waste flex gap-1 md:gap-4 mr-[54px] md:mr-[91px]">
             <div
-              className="stock"
+              className="stock relative w-[50px] h-[100px] md:w-[75px] md:h-[125px]"
+              data-pile="stock"
               style={{
-                width: '75px',
-                height: '125px',
-                position: 'relative',
                 border: '1px solid gray',
                 borderRadius: '4px',
                 display: 'flex',
@@ -524,11 +499,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
               )}
             </div>
             <div
-              className="waste"
+              className="waste relative w-[50px] h-[100px] md:w-[75px] md:h-[125px]"
+              data-pile="waste"
               style={{
-                width: '75px',
-                height: '125px',
-                position: 'relative',
                 border: '1px solid gray',
                 borderRadius: '4px',
                 display: 'flex',
@@ -554,24 +527,17 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
               })}
             </div>
           </div>
-          <div
-            className="foundations"
-            style={{
-              display: 'flex',
-              gap: '1rem',
-            }}
-          >
+          <div className="foundations flex gap-1 md:gap-4">
             {foundations.map((foundation, i) => {
               return (
                 <div
-                  className="foundation"
+                  className="foundation w-[50px] md:w-[75px] h-[100px] md:h-[125px]"
                   id={'f' + i}
                   key={i}
+                  data-pile="foundation"
                   style={{
                     border: '1px solid gray',
                     borderRadius: '4px',
-                    width: '75px',
-                    height: '125px',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -585,23 +551,15 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
             })}
           </div>
         </div>
-        <div
-          className="tableaux"
-          style={{
-            display: 'flex',
-            gap: '1rem',
-          }}
-        >
+        <div className="tableaux flex gap-1 md:gap-4 justify-center">
           {tableaux.map((tableau, i) => {
             return (
               <div
                 key={i}
                 id={`t${i}`}
-                className="tableau"
+                className="tableau relative w-[50px] md:w-[75px] h-[100px] md:h-[125px]"
+                data-pile="tableau"
                 style={{
-                  width: '75px',
-                  height: '125px',
-                  position: 'relative',
                   border: '1px solid gray',
                   borderRadius: '4px',
                   display: 'flex',
