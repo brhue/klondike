@@ -8,7 +8,7 @@
 
 ## Todo
 
-- [] Time based scoring mode
+- [x] Time based scoring mode
 - [] Add scoreboard of most recent wins (last five or ten?)
 - [x] Refactor to useReducer for main klondike state
 - [] New game confirmation when in the middle of a game
