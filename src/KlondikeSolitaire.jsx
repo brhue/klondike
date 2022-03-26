@@ -331,7 +331,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
       <h1>Solitaire</h1>
       <h2>Score: {score} points</h2>
       <h2>Duration: {duration}</h2>
-      <p>
+      <div className="flex justify-center gap-4 mb-4">
         <Button
           onClick={(e) => {
             dispatch({ type: 'change_draw_mode', value: 1 })
@@ -348,10 +348,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
         >
           Draw 3
         </Button>
-      </p>
+      </div>
       <div
-        className="play-area"
-        style={{ userSelect: 'none' }}
+        className="play-area select-none"
         onClick={(e) => {
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
             if (state.stock.length === 0) {
@@ -480,36 +479,16 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
       >
         <div className="upper-area flex gap-1 md:gap-4 mb-8 justify-center">
           <div className="stock-waste flex gap-1 md:gap-4 mr-[54px] md:mr-[91px]">
-            <div
-              className="stock relative w-[50px] h-[100px] md:w-[75px] md:h-[125px]"
-              data-pile="stock"
-              style={{
-                border: '1px solid gray',
-                borderRadius: '4px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
+            <Pile type="stock">
               {stock.length ? (
                 stock.map((card) => {
                   return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
                 })
               ) : (
-                <p>Reset</p>
+                <p className="-z-[1]">Reset</p>
               )}
-            </div>
-            <div
-              className="waste relative w-[50px] h-[100px] md:w-[75px] md:h-[125px]"
-              data-pile="waste"
-              style={{
-                border: '1px solid gray',
-                borderRadius: '4px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
+            </Pile>
+            <Pile type="waste">
               {waste.map((card, i) => {
                 if (drawMode === 3) {
                   let isTopThree = waste.length - i < 3
@@ -526,28 +505,16 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
                 }
                 return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
               })}
-            </div>
+            </Pile>
           </div>
           <div className="foundations flex gap-1 md:gap-4">
             {foundations.map((foundation, i) => {
               return (
-                <div
-                  className="foundation w-[50px] md:w-[75px] h-[100px] md:h-[125px]"
-                  id={'f' + i}
-                  key={i}
-                  data-pile="foundation"
-                  style={{
-                    border: '1px solid gray',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                >
+                <Pile id={'f' + i} key={i} type="foundation">
                   {foundation.map((card) => {
                     return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
                   })}
-                </div>
+                </Pile>
               )
             })}
           </div>
@@ -556,20 +523,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
           {tableaux.map((tableau, i) => {
             let inStack = false
             return (
-              <div
-                key={i}
-                id={`t${i}`}
-                className="tableau relative w-[50px] md:w-[75px] h-[100px] md:h-[125px]"
-                data-pile="tableau"
-                style={{
-                  border: '1px solid gray',
-                  borderRadius: '4px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexShrink: 0,
-                }}
-              >
+              <Pile key={i} id={`t${i}`} type="tableau">
                 {tableau.map((card, i) => {
                   let isSelected = card.id === selectedCard?.id
                   if (isSelected) inStack = true
@@ -583,11 +537,23 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
                     />
                   )
                 })}
-              </div>
+              </Pile>
             )
           })}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Pile({ type, children, ...props }) {
+  return (
+    <div
+      {...props}
+      className={`${type} relative flex justify-center items-center w-[50px] h-[100px] border-[1px] border-gray-300 rounded-md md:w-[75px] md:h-[125px]`}
+      data-pile={type}
+    >
+      {children}
     </div>
   )
 }
