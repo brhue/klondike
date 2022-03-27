@@ -334,6 +334,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
       <h2>Score: {score} points</h2>
       <h2>Duration: {duration}</h2>
       <div className="flex justify-center gap-4 mb-4">
+        <Button onClick={onNewGame} className="bg-black hover:bg-zinc-800 text-white font-bold">
+          New Game
+        </Button>
         <Button
           onClick={(e) => {
             dispatch({ type: 'change_draw_mode', value: 1 })
