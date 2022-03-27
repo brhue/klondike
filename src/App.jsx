@@ -15,11 +15,11 @@ function App() {
       return score.drawMode === 1
         ? {
             ...s,
-            drawOne: [...s.drawOne.slice(-9), score],
+            drawOne: [score, ...s.drawOne.slice(-9)],
           }
         : {
             ...s,
-            drawThree: [...s.drawThree.slice(-9), score],
+            drawThree: [score, ...s.drawThree.slice(-9)],
           }
     })
   return <KlondikeSolitaire key={version} updateScores={addScore} scores={scores} onNewGame={reset} />
