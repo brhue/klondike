@@ -103,7 +103,7 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
   )
 }
 
-function createInitialState() {
+function createInitialState(initialDrawMode) {
   let deck = []
   let i = 1
   Object.keys(ranks).forEach((rank) => {
@@ -119,7 +119,7 @@ function createInitialState() {
   shuffle(deck)
 
   let state = {
-    drawMode: 3,
+    drawMode: initialDrawMode,
     score: 0,
     foundations: [[], [], [], []],
     waste: [],
@@ -276,8 +276,8 @@ function klondikeReducer(state, action) {
   throw Error('Unknown action: ' + action.type)
 }
 
-function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
-  let [state, dispatch] = useReducer(klondikeReducer, null, createInitialState)
+function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode }) {
+  let [state, dispatch] = useReducer(klondikeReducer, initialDrawMode, createInitialState)
 
   let [selectedCard, setSelectedCard] = useState()
 
@@ -330,30 +330,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame }) {
           New Game
         </Button>
       </GameOverModal>
-      <h1>Solitaire</h1>
-      <h2>Score: {score} points</h2>
-      <h2>Duration: {duration}</h2>
-      <div className="flex justify-center gap-4 mb-4">
-        <Button onClick={onNewGame} className="bg-black hover:bg-zinc-800 text-white font-bold">
-          New Game
-        </Button>
-        <Button
-          onClick={(e) => {
-            dispatch({ type: 'change_draw_mode', value: 1 })
-          }}
-          disabled={drawMode === 1}
-        >
-          Draw 1
-        </Button>
-        <Button
-          onClick={(e) => {
-            dispatch({ type: 'change_draw_mode', value: 3 })
-          }}
-          disabled={drawMode === 3}
-        >
-          Draw 3
-        </Button>
-      </div>
+      <p className="flex gap-4 justify-center mb-4">
+        <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
+      </p>
       <div
         className="play-area select-none"
         onClick={(e) => {
