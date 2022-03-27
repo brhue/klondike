@@ -89,12 +89,13 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
         color: suit === suits.spade || suit === suits.club ? 'black' : 'red',
         ...style,
       }}
-      onDoubleClick={() => {
+      onDoubleClick={(e) => {
         handleDoubleClick({
           rank,
           suit,
           faceUp,
           id,
+          containingPile: e.target.parentElement.dataset.pile,
         })
       }}
     >
@@ -306,17 +307,20 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
 
   function handleCardDoubleClick(card) {
     if (!card.faceUp) return
-    let targetFoundation
-    if (card.rank === 'ace') {
-      targetFoundation = foundations.findIndex((f) => f.length === 0)
-    } else {
-      targetFoundation = foundations.findIndex((f) => f.some((c) => isValidFoundationMove(card, c)))
-    }
+    let targetFoundation = foundations.findIndex((f) =>
+      f.length === 0 ? isValidFoundationMove(card, null) : f.some((c) => isValidFoundationMove(card, c))
+    )
     if (targetFoundation === -1) {
       dispatch({ type: 'invalid_move' })
-    } else {
+    } else if (card.containingPile === 'tableau') {
       dispatch({
         type: 'move_tableau_to_foundation',
+        targetId: targetFoundation,
+        card,
+      })
+    } else if (card.containingPile === 'waste') {
+      dispatch({
+        type: 'move_waste_to_foundation',
         targetId: targetFoundation,
         card,
       })
@@ -481,13 +485,21 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
                       key={card.id}
                       {...card}
                       isSelected={card.id === selectedCard?.id}
+                      handleDoubleClick={handleCardDoubleClick}
                       style={{
                         left: `${isTopThree ? (i - waste.length + 3) * 15 : 0}px`,
                       }}
                     />
                   )
                 }
-                return <Card key={card.id} {...card} isSelected={card.id === selectedCard?.id} />
+                return (
+                  <Card
+                    key={card.id}
+                    {...card}
+                    handleDoubleClick={handleCardDoubleClick}
+                    isSelected={card.id === selectedCard?.id}
+                  />
+                )
               })}
             </Pile>
           </div>
