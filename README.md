@@ -15,3 +15,5 @@
 - [] Drag and drop controls (with option to switch between perhaps)
 - [] Figure out what's needed to make it installable (a PWA)
 - [] Bugfix: If a card in waste is selected and then the waste is recycled back into stock a subsequent click on a card in a tableau (and probably a foundation) will throw a `card is undefined` error.
+- [] Save in progress game state to restore on page load
+- [] Undo history
