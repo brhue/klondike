@@ -27,9 +27,9 @@ function App() {
           }
     })
   return (
-    <>
-      <h1 className="text-center text-2xl">Klondike</h1>
-      <div className="flex justify-center gap-4 mb-4">
+    <div className="h-full flex flex-col space-y-4 ">
+      <h1 className="text-center text-3xl">Klondike</h1>
+      <div className="flex justify-center gap-4">
         <Button onClick={reset} className="bg-black hover:bg-zinc-800 text-white font-bold">
           New Game
         </Button>
@@ -63,7 +63,7 @@ function App() {
         onNewGame={reset}
         initialDrawMode={settings.drawMode}
       />
-    </>
+    </div>
   )
 }
 

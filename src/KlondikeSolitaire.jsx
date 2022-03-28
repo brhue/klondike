@@ -333,7 +333,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
   }
 
   return (
-    <div className="md:px-8">
+    <div className="md:px-8 flex flex-col flex-grow">
       <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
         <Button onClick={onNewGame} className="w-full bg-black text-white font-bold hover:bg-zinc-800">
           New Game
@@ -343,7 +343,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
         <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
       </p>
       <div
-        className="play-area select-none"
+        className="play-area select-none flex-grow"
         onClick={(e) => {
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
             if (state.stock.length === 0) {
