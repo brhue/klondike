@@ -169,7 +169,7 @@ function klondikeReducer(state, action) {
     case 'move_tableau_to_foundation':
       return {
         ...state,
-        score: state.score + 10,
+        score: action.previousCard?.faceUp ? state.score + 10 : state.score + 15,
         tableaux: state.tableaux.map((t) => {
           return t
             .filter((c) => c.id !== action.card.id)
@@ -313,9 +313,13 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
     if (targetFoundation === -1) {
       dispatch({ type: 'invalid_move' })
     } else if (card.containingPile === 'tableau') {
+      let tableau = tableaux.find((t) => t.some((c) => c.id === card.id))
+      let cardIndex = tableau.findIndex((c) => c.id === card.id)
+      let previousCard = tableau.at(cardIndex - 1)
       dispatch({
         type: 'move_tableau_to_foundation',
         targetId: targetFoundation,
+        previousCard,
         card,
       })
     } else if (card.containingPile === 'waste') {
@@ -325,6 +329,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
         card,
       })
     }
+    setSelectedCard(null)
   }
 
   return (
@@ -413,7 +418,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
               if (containingPile === 'tableau') {
                 let tIndex = tableaux.findIndex((t) => t.some((c) => c.id === selectedCard.id))
                 let card = tableaux[tIndex].find((c) => c.id === selectedCard.id)
+                let cardIndex = tableaux[tIndex].findIndex((c) => c.id === selectedCard.id)
                 let destinationCard = foundations[id].at(-1)
+                let previousCard = tableaux[tIndex].at(cardIndex - 1)
 
                 if (!isValidFoundationMove(card, destinationCard)) {
                   dispatch({ type: 'invalid_move' })
@@ -421,6 +428,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
                   dispatch({
                     type: 'move_tableau_to_foundation',
                     targetId: id,
+                    previousCard,
                     card,
                   })
                 }
