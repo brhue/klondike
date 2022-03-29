@@ -11,9 +11,13 @@ function App() {
   let [settings, setSettings] = useLocalStorage('klondike:settings', {
     drawMode: 3,
   })
+  let [savedGame, setSavedGame] = useLocalStorage('klondike:savedGame', null)
   let [version, setVersion] = useState(0)
 
-  const reset = () => setVersion((v) => v + 1)
+  const reset = () => {
+    setSavedGame(null)
+    setVersion((v) => v + 1)
+  }
   const addScore = (score) =>
     setScores((s) => {
       return score.drawMode === 1
@@ -62,6 +66,8 @@ function App() {
         scores={scores}
         onNewGame={reset}
         initialDrawMode={settings.drawMode}
+        savedState={savedGame}
+        updateSavedState={setSavedGame}
       />
     </div>
   )

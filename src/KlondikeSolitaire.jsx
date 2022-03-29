@@ -104,7 +104,8 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
   )
 }
 
-function createInitialState(initialDrawMode) {
+function createInitialState({ initialDrawMode, savedState }) {
+  if (savedState) return savedState
   let deck = []
   let i = 1
   Object.keys(ranks).forEach((rank) => {
@@ -277,10 +278,11 @@ function klondikeReducer(state, action) {
   throw Error('Unknown action: ' + action.type)
 }
 
-function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode }) {
-  let [state, dispatch] = useReducer(klondikeReducer, initialDrawMode, createInitialState)
+function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, savedState, updateSavedState }) {
+  let [state, dispatch] = useReducer(klondikeReducer, { initialDrawMode, savedState }, createInitialState)
 
   let [selectedCard, setSelectedCard] = useState()
+  let [hasStarted, setHasStarted] = useState(false)
 
   let { duration, score, stock, waste, foundations, tableaux, drawMode } = state
 
@@ -289,6 +291,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
   let finalScore = isGameOver ? score + Math.round(700_000 / duration) : score
   useEffect(() => {
     if (isGameOver) {
+      updateSavedState(null)
       updateScores({
         score: finalScore,
         date: Date.now(),
@@ -297,15 +300,26 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
       })
       return
     }
-    let id = setInterval(() => {
-      dispatch({ type: 'update_duration' })
-    }, 1000)
-    return () => {
-      clearInterval(id)
+    if (hasStarted) {
+      let id = setInterval(() => {
+        dispatch({ type: 'update_duration' })
+      }, 1000)
+      return () => {
+        clearInterval(id)
+      }
     }
-  }, [isGameOver])
+  }, [isGameOver, hasStarted])
+
+  useEffect(() => {
+    if (hasStarted) {
+      updateSavedState(state)
+    }
+  }, [state])
 
   function handleCardDoubleClick(card) {
+    if (!hasStarted) {
+      setHasStarted(true)
+    }
     if (!card.faceUp) return
     let targetFoundation = foundations.findIndex((f) =>
       f.length === 0 ? isValidFoundationMove(card, null) : f.some((c) => isValidFoundationMove(card, c))
@@ -345,6 +359,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
       <div
         className="play-area select-none flex-grow"
         onClick={(e) => {
+          if (!hasStarted) {
+            setHasStarted(true)
+          }
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
             if (state.stock.length === 0) {
               dispatch({ type: 'reset_waste' })
