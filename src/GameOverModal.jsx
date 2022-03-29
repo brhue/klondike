@@ -6,7 +6,7 @@ export default function GameOverModal({ children, isGameOver, scores, finalScore
     <Dialog
       isOpen={isGameOver}
       aria-label="Game over window"
-      className="border-2 border-black rounded w-full md:w-1/2 mt-4 p-4"
+      className="border-2 border-black rounded w-full md:w-1/2 mt-4 p-4 dark:bg-zinc-800"
     >
       <div>
         <h1 className="text-center font-bold text-2xl">You win!</h1>

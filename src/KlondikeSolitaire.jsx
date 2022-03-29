@@ -81,12 +81,12 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
   let suitSymnbol = suitSymbols[suit]
   return (
     <div
-      className="card absolute w-[50px] md:w-[75px] h-[100px] md:h-[125px] p-0.5 rounded-md"
+      className={`card absolute w-[50px] md:w-[75px] h-[100px] md:h-[125px] p-0.5 rounded-md
+        ${isSelected ? 'border-2 border-yellow-300' : 'border border-black'}
+        ${faceUp ? 'bg-white dark:bg-zinc-700' : 'bg-[green] dark:bg-zinc-800'}
+        ${suit === suits.spade || suit === suits.club ? 'text-black dark:text-white' : 'text-red-600'}`}
       id={id}
       style={{
-        border: isSelected ? '2px solid gold' : '1px solid black',
-        backgroundColor: faceUp ? 'white' : 'green',
-        color: suit === suits.spade || suit === suits.club ? 'black' : 'red',
         ...style,
       }}
       onDoubleClick={(e) => {
@@ -554,7 +554,7 @@ function Pile({ type, children, ...props }) {
   return (
     <div
       {...props}
-      className={`${type} relative flex justify-center items-center w-[50px] h-[100px] border-[1px] border-gray-300 rounded-md md:w-[75px] md:h-[125px]`}
+      className={`${type} relative flex justify-center items-center w-[50px] h-[100px] border-[1px] border-gray-300 rounded-md md:w-[75px] md:h-[125px] bg-gray-300 dark:bg-zinc-600 dark:border-zinc-600`}
       data-pile={type}
     >
       {children}
