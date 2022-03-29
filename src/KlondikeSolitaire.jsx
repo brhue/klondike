@@ -495,7 +495,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
                       isSelected={card.id === selectedCard?.id}
                       handleDoubleClick={handleCardDoubleClick}
                       style={{
-                        left: `${isTopThree ? (i - waste.length + 3) * 15 : 0}px`,
+                        left: isTopThree ? `${(i - waste.length + 3) * 15}px` : null,
                       }}
                     />
                   )
@@ -535,7 +535,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode })
                     <Card
                       key={card.id}
                       {...card}
-                      style={{ top: `${i * 20}px` }}
+                      style={{ top: i === 0 ? null : `${i * 20}px` }}
                       isSelected={inStack || isSelected}
                       handleDoubleClick={handleCardDoubleClick}
                     />
