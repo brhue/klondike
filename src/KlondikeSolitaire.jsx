@@ -330,6 +330,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
       let tableau = tableaux.find((t) => t.some((c) => c.id === card.id))
       let cardIndex = tableau.findIndex((c) => c.id === card.id)
       let previousCard = tableau.at(cardIndex - 1)
+      // TODO: Can we get this information before this point and perhaps bail earlier
+      let isTopCard = card.id === tableau.at(-1).id
+      if (!isTopCard) return
       dispatch({
         type: 'move_tableau_to_foundation',
         targetId: targetFoundation,
@@ -337,6 +340,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
         card,
       })
     } else if (card.containingPile === 'waste') {
+      // TODO: Can we get this information before this point and perhaps bail earlier
+      let isTopCard = card.id === waste.at(-1).id
+      if (!isTopCard) return
       dispatch({
         type: 'move_waste_to_foundation',
         targetId: targetFoundation,
@@ -396,8 +402,10 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
               } else if (containingPile === 'waste') {
                 let card = waste.find((c) => c.id === selectedCard.id)
                 let destinationCard = tableaux[id].at(-1)
+                // TODO: Can we get this information before this point and perhaps bail earlier
+                let isTopCard = card === waste.at(-1)
 
-                if (!isValidTableauMove(card, destinationCard)) {
+                if (!isTopCard || !isValidTableauMove(card, destinationCard)) {
                   dispatch({ type: 'invalid_move' })
                 } else {
                   dispatch({
@@ -438,8 +446,10 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                 let cardIndex = tableaux[tIndex].findIndex((c) => c.id === selectedCard.id)
                 let destinationCard = foundations[id].at(-1)
                 let previousCard = tableaux[tIndex].at(cardIndex - 1)
+                // TODO: Can we get this information before this point and perhaps bail earlier
+                let isTopCard = cardIndex === tableaux[tIndex].length - 1
 
-                if (!isValidFoundationMove(card, destinationCard)) {
+                if (!isTopCard || !isValidFoundationMove(card, destinationCard)) {
                   dispatch({ type: 'invalid_move' })
                 } else {
                   dispatch({
@@ -452,8 +462,10 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
               } else if (containingPile === 'waste') {
                 let card = waste.find((c) => c.id === selectedCard.id)
                 let destinationCard = foundations[id].at(-1)
+                // TODO: Can we get this information before this point and perhaps bail earlier
+                let isTopCard = card === waste.at(-1)
 
-                if (!isValidFoundationMove(card, destinationCard)) {
+                if (!isTopCard || !isValidFoundationMove(card, destinationCard)) {
                   dispatch({ type: 'invalid_move' })
                 } else {
                   dispatch({
