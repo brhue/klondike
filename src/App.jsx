@@ -23,11 +23,11 @@ function App() {
       return score.drawMode === 1
         ? {
             ...s,
-            drawOne: [score, ...s.drawOne.slice(-9)],
+            drawOne: [score, ...s.drawOne.slice(0, 9)],
           }
         : {
             ...s,
-            drawThree: [score, ...s.drawThree.slice(-9)],
+            drawThree: [score, ...s.drawThree.slice(0, 9)],
           }
     })
   return (
