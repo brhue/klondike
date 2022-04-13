@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import KlondikeSolitaire from './KlondikeSolitaire'
 import { useLocalStorage } from './utils/hooks'
 import Button from './Button'
+import ReloadPrompt from './ReloadPrompt'
 
 function App() {
   let [scores, setScores] = useLocalStorage('klondike:scores', {
@@ -69,6 +70,7 @@ function App() {
         savedState={savedGame}
         updateSavedState={setSavedGame}
       />
+      <ReloadPrompt />
     </div>
   )
 }
