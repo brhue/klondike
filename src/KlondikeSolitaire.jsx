@@ -353,7 +353,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
   }
 
   return (
-    <div className="md:px-8 flex flex-col flex-grow">
+    <div className="flex flex-col flex-grow">
       <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
         <Button onClick={onNewGame} className="w-full bg-black text-white font-bold hover:bg-zinc-800">
           New Game

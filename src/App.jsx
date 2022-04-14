@@ -3,6 +3,7 @@ import KlondikeSolitaire from './KlondikeSolitaire'
 import { useLocalStorage } from './utils/hooks'
 import Button from './Button'
 import ReloadPrompt from './ReloadPrompt'
+import { StatisticsScreen } from './StatisticsScreen'
 
 function App() {
   let [scores, setScores] = useLocalStorage('klondike:scores', {
@@ -14,6 +15,11 @@ function App() {
   })
   let [savedGame, setSavedGame] = useLocalStorage('klondike:savedGame', null)
   let [version, setVersion] = useState(0)
+
+  let [showStats, setShowStats] = useState(false)
+
+  const openStatsScreen = () => setShowStats(true)
+  const closeStatsScreen = () => setShowStats(false)
 
   const reset = () => {
     setSavedGame(null)
@@ -32,13 +38,27 @@ function App() {
           }
     })
   return (
-    <div className="h-full flex flex-col space-y-4 ">
-      <h1 className="text-center text-3xl">Klondike</h1>
-      <div className="flex justify-center gap-4">
+    <div className="h-full flex flex-col space-y-4 pt-4 max-w-fit mx-auto md:px-8">
+      <div className="flex justify-between gap-4 items-center">
+        <h1 className="text-center text-3xl">Klondike</h1>
+        <button
+          className="p-1 rounded hover:bg-zinc-200 hover:dark:bg-zinc-700 active:bg-zinc-300 active:dark:bg-zinc-800"
+          onClick={openStatsScreen}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+            <path
+              fill="currentColor"
+              d="M16,11V3H8v6H2v12h20V11H16z M10,5h4v14h-4V5z M4,11h4v8H4V11z M20,19h-4v-6h4V19z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+      <div className="flex justify-start gap-4">
         <Button onClick={reset} className="bg-black hover:bg-zinc-800 text-white font-bold">
           New Game
         </Button>
         <Button
+          className="flex-grow md:flex-grow-0"
           onClick={(e) => {
             setSettings((s) => {
               return { ...s, drawMode: 1 }
@@ -50,6 +70,7 @@ function App() {
           Draw 1
         </Button>
         <Button
+          className="flex-grow md:flex-grow-0"
           onClick={(e) => {
             setSettings((s) => {
               return { ...s, drawMode: 3 }
@@ -70,6 +91,7 @@ function App() {
         savedState={savedGame}
         updateSavedState={setSavedGame}
       />
+      <StatisticsScreen isOpen={showStats} scores={scores} close={closeStatsScreen} />
       <ReloadPrompt />
     </div>
   )
