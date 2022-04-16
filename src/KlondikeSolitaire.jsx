@@ -105,7 +105,10 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
 }
 
 function createInitialState({ initialDrawMode, savedState }) {
-  if (savedState) return savedState
+  if (savedState) {
+    return Array.isArray(savedState) ? savedState : [savedState]
+  }
+
   let deck = []
   let i = 1
   Object.keys(ranks).forEach((rank) => {
@@ -136,106 +139,125 @@ function createInitialState({ initialDrawMode, savedState }) {
   }
 
   state.stock = deck
-  return state
+  return [state]
 }
 
 function klondikeReducer(state, action) {
+  let currentGameState = state.at(action.historyIndex)
   switch (action.type) {
     case 'move_foundation_to_foundation':
-      return {
-        ...state,
-        foundations: state.foundations
-          .map((f) => {
-            return f.filter((c) => c.id !== action.card.id)
-          })
-          .map((f, i) => {
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          foundations: currentGameState.foundations
+            .map((f) => {
+              return f.filter((c) => c.id !== action.card.id)
+            })
+            .map((f, i) => {
+              if (i === action.targetId) {
+                return [...f, action.card]
+              }
+              return f
+            }),
+        },
+      ]
+    case 'move_waste_to_foundation':
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: currentGameState.score + 10,
+          waste: currentGameState.waste.filter((c) => c.id !== action.card.id),
+          foundations: currentGameState.foundations.map((f, i) => {
             if (i === action.targetId) {
               return [...f, action.card]
             }
             return f
           }),
-      }
-    case 'move_waste_to_foundation':
-      return {
-        ...state,
-        score: state.score + 10,
-        waste: state.waste.filter((c) => c.id !== action.card.id),
-        foundations: state.foundations.map((f, i) => {
-          if (i === action.targetId) {
-            return [...f, action.card]
-          }
-          return f
-        }),
-      }
+        },
+      ]
     case 'move_tableau_to_foundation':
-      return {
-        ...state,
-        score: action.previousCard?.faceUp ? state.score + 10 : state.score + 15,
-        tableaux: state.tableaux.map((t) => {
-          return t
-            .filter((c) => c.id !== action.card.id)
-            .map((c, i, a) => {
-              if (i === a.length - 1) {
-                return { ...c, faceUp: true }
-              }
-              return c
-            })
-        }),
-        foundations: state.foundations.map((f, i) => {
-          if (i === action.targetId) {
-            return [...f, action.card]
-          }
-          return f
-        }),
-      }
-    case 'move_foundation_to_tableau':
-      return {
-        ...state,
-        score: Math.max(state.score - 15, 0),
-        foundations: state.foundations.map((f) => {
-          return f.filter((c) => c.id !== action.card.id)
-        }),
-        tableaux: state.tableaux.map((t, i) => {
-          if (i === action.targetId) {
-            return [...t, action.card]
-          }
-          return t
-        }),
-      }
-    case 'move_waste_to_tableau':
-      return {
-        ...state,
-        score: state.score + 5,
-        waste: state.waste.filter((c) => c.id !== action.card.id),
-        tableaux: state.tableaux.map((t, i) => {
-          if (i == action.targetId) {
-            return [...t, action.card]
-          }
-          return t
-        }),
-      }
-    case 'move_stack_to_tableau':
-      return {
-        ...state,
-        score: action.previousCard?.faceUp ? state.score : state.score + 5,
-        tableaux: state.tableaux
-          .map((t) => {
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: action.previousCard?.faceUp ? currentGameState.score + 10 : currentGameState.score + 15,
+          tableaux: currentGameState.tableaux.map((t) => {
             return t
-              .filter((c) => !action.cards.includes(c))
+              .filter((c) => c.id !== action.card.id)
               .map((c, i, a) => {
                 if (i === a.length - 1) {
                   return { ...c, faceUp: true }
                 }
                 return c
               })
-          })
-          .map((t, i) => {
-            if (i == action.targetId) {
-              return [...t, ...action.cards]
+          }),
+          foundations: currentGameState.foundations.map((f, i) => {
+            if (i === action.targetId) {
+              return [...f, action.card]
+            }
+            return f
+          }),
+        },
+      ]
+    case 'move_foundation_to_tableau':
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: Math.max(currentGameState.score - 15, 0),
+          foundations: currentGameState.foundations.map((f) => {
+            return f.filter((c) => c.id !== action.card.id)
+          }),
+          tableaux: currentGameState.tableaux.map((t, i) => {
+            if (i === action.targetId) {
+              return [...t, action.card]
             }
             return t
           }),
-      }
+        },
+      ]
+    case 'move_waste_to_tableau':
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: currentGameState.score + 5,
+          waste: currentGameState.waste.filter((c) => c.id !== action.card.id),
+          tableaux: currentGameState.tableaux.map((t, i) => {
+            if (i == action.targetId) {
+              return [...t, action.card]
+            }
+            return t
+          }),
+        },
+      ]
+    case 'move_stack_to_tableau':
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: action.previousCard?.faceUp ? currentGameState.score : currentGameState.score + 5,
+          tableaux: currentGameState.tableaux
+            .map((t) => {
+              return t
+                .filter((c) => !action.cards.includes(c))
+                .map((c, i, a) => {
+                  if (i === a.length - 1) {
+                    return { ...c, faceUp: true }
+                  }
+                  return c
+                })
+            })
+            .map((t, i) => {
+              if (i == action.targetId) {
+                return [...t, ...action.cards]
+              }
+              return t
+            }),
+        },
+      ]
     case 'change_draw_mode':
       let initialState = createInitialState()
       return {
@@ -243,48 +265,53 @@ function klondikeReducer(state, action) {
         drawMode: action.value,
       }
     case 'reset_waste':
-      return {
-        ...state,
-        score: state.drawMode === 1 ? Math.max(state.score - 100, 0) : state.score,
-        stock: state.waste
-          .map((card) => {
-            return {
-              ...card,
-              faceUp: false,
-            }
-          })
-          .reverse(),
-        waste: [],
-      }
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          score: currentGameState.drawMode === 1 ? Math.max(currentGameState.score - 100, 0) : currentGameState.score,
+          stock: currentGameState.waste
+            .map((card) => {
+              return {
+                ...card,
+                faceUp: false,
+              }
+            })
+            .reverse(),
+          waste: [],
+        },
+      ]
     case 'draw': {
-      let cards = state.stock
-        .slice(-state.drawMode)
+      let cards = currentGameState.stock
+        .slice(-currentGameState.drawMode)
         .map((c) => ({ ...c, faceUp: true }))
         .reverse()
-      return {
-        ...state,
-        stock: state.stock.slice(0, -state.drawMode),
-        waste: [...state.waste, ...cards],
-      }
+      return [
+        ...state.slice(0, action.historyIndex + 1),
+        {
+          ...currentGameState,
+          stock: currentGameState.stock.slice(0, -currentGameState.drawMode),
+          waste: [...currentGameState.waste, ...cards],
+        },
+      ]
     }
     case 'invalid_move':
-      return { ...state }
-    case 'update_duration':
-      return {
-        ...state,
-        duration: state.duration + 1,
-      }
+      // return { ...currentGameState }
+      return state
   }
   throw Error('Unknown action: ' + action.type)
 }
 
 function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, savedState, updateSavedState }) {
   let [state, dispatch] = useReducer(klondikeReducer, { initialDrawMode, savedState }, createInitialState)
+  // let [history, setHistory] = useState([state])
+  let [historyIndex, setHistoryIndex] = useState(0)
 
   let [selectedCard, setSelectedCard] = useState()
   let [hasStarted, setHasStarted] = useState(false)
 
-  let { duration, score, stock, waste, foundations, tableaux, drawMode } = state
+  let [duration, setDuration] = useState(0)
+  let { score, stock, waste, foundations, tableaux, drawMode } = state[historyIndex]
 
   let checkIsGameOver = (foundations) => foundations.every((f) => f.length === 13)
   let isGameOver = checkIsGameOver(foundations)
@@ -302,7 +329,7 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
     }
     if (hasStarted) {
       let id = setInterval(() => {
-        dispatch({ type: 'update_duration' })
+        setDuration((d) => d + 1)
       }, 1000)
       return () => {
         clearInterval(id)
@@ -338,7 +365,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
         targetId: targetFoundation,
         previousCard,
         card,
+        historyIndex,
       })
+      setHistoryIndex(historyIndex + 1)
     } else if (card.containingPile === 'waste') {
       // TODO: Can we get this information before this point and perhaps bail earlier
       let isTopCard = card.id === waste.at(-1).id
@@ -347,7 +376,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
         type: 'move_waste_to_foundation',
         targetId: targetFoundation,
         card,
+        historyIndex,
       })
+      setHistoryIndex(historyIndex + 1)
     }
     setSelectedCard(null)
   }
@@ -359,8 +390,16 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
           New Game
         </Button>
       </GameOverModal>
-      <p className="flex gap-4 justify-center mb-4">
+      <p className="flex gap-4 items-center justify-center mb-4">
         <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
+        <Button
+          onClick={() => {
+            setHistoryIndex((c) => (c === 0 ? 0 : c - 1))
+          }}
+          disabled={historyIndex === 0}
+        >
+          undo
+        </Button>
       </p>
       <div
         className="play-area select-none flex-grow"
@@ -369,10 +408,12 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
             setHasStarted(true)
           }
           if (e.target.matches('.stock') || e.target.matches('.stock .card')) {
-            if (state.stock.length === 0) {
-              dispatch({ type: 'reset_waste' })
+            if (stock.length === 0) {
+              dispatch({ type: 'reset_waste', historyIndex })
+              setHistoryIndex(historyIndex + 1)
             } else {
-              dispatch({ type: 'draw' })
+              dispatch({ type: 'draw', historyIndex })
+              setHistoryIndex(historyIndex + 1)
             }
           } else if (e.target.matches('.tableau') || e.target.matches('.tableau .card')) {
             if (selectedCard) {
@@ -397,7 +438,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     targetId: id,
                     previousCard,
                     cards,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               } else if (containingPile === 'waste') {
                 let card = waste.find((c) => c.id === selectedCard.id)
@@ -412,7 +455,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     type: 'move_waste_to_tableau',
                     targetId: id,
                     card,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               } else if (containingPile === 'foundation') {
                 let foundationIndex = foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
@@ -426,7 +471,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     type: 'move_foundation_to_tableau',
                     targetId: id,
                     card,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               }
               setSelectedCard(null)
@@ -457,7 +504,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     targetId: id,
                     previousCard,
                     card,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               } else if (containingPile === 'waste') {
                 let card = waste.find((c) => c.id === selectedCard.id)
@@ -472,7 +521,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     type: 'move_waste_to_foundation',
                     targetId: id,
                     card,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               } else if (containingPile === 'foundation') {
                 let foundationIndex = foundations.findIndex((f) => f.some((c) => c.id === selectedCard.id))
@@ -486,7 +537,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
                     type: 'move_foundation_to_foundation',
                     targetId: id,
                     card,
+                    historyIndex,
                   })
+                  setHistoryIndex(historyIndex + 1)
                 }
               }
               setSelectedCard(null)
