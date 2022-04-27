@@ -397,13 +397,13 @@ function KlondikeSolitaire({
   }
 
   return (
-    <div className="flex flex-col flex-grow">
+    <div className="flex flex-col flex-grow space-y-4">
       <GameOverModal isGameOver={isGameOver} scores={scores} finalScore={finalScore} drawMode={drawMode}>
         <Button onClick={onNewGame} className="w-full bg-black text-white font-bold hover:bg-zinc-800">
           New Game
         </Button>
       </GameOverModal>
-      <div className="flex justify-start gap-4">
+      <div className="flex gap-4">
         <Button onClick={onNewGame} className="bg-black hover:bg-zinc-800 text-white font-bold">
           New Game
         </Button>
@@ -431,9 +431,6 @@ function KlondikeSolitaire({
         >
           Draw 3
         </Button>
-      </div>
-      <p className="flex gap-4 items-center justify-center mb-4">
-        <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
         <Button
           className="px-2"
           onClick={() => {
@@ -456,6 +453,9 @@ function KlondikeSolitaire({
             <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
           </svg>
         </Button>
+      </div>
+      <p className="flex gap-4 items-center justify-center">
+        <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
       </p>
       <div
         className="play-area select-none flex-grow"
