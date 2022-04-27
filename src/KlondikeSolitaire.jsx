@@ -1,6 +1,7 @@
 import { useReducer, useState, useEffect } from 'react'
 import GameOverModal from './GameOverModal'
 import Button from './Button'
+import { useLocalStorage } from './utils/hooks'
 
 const rankSymbols = {
   ace: 'A',
@@ -105,6 +106,11 @@ function Card({ rank, suit, style, faceUp, id, isSelected, handleDoubleClick }) 
 }
 
 function createInitialState({ initialDrawMode, savedState }) {
+  // Catches savedState object with gameState and historyIndex
+  if (savedState?.gameState) {
+    return savedState.gameState
+  }
+  // Catches pre-undo version
   if (savedState) {
     return Array.isArray(savedState) ? savedState : [savedState]
   }
@@ -302,15 +308,22 @@ function klondikeReducer(state, action) {
   throw Error('Unknown action: ' + action.type)
 }
 
-function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, savedState, updateSavedState }) {
+function KlondikeSolitaire({
+  scores,
+  updateScores,
+  onNewGame,
+  initialDrawMode,
+  savedState,
+  updateSavedState,
+  setSettings,
+}) {
   let [state, dispatch] = useReducer(klondikeReducer, { initialDrawMode, savedState }, createInitialState)
-  // let [history, setHistory] = useState([state])
-  let [historyIndex, setHistoryIndex] = useState(0)
+  let [historyIndex, setHistoryIndex] = useState(savedState?.historyIndex ?? 0)
+  let [duration, setDuration] = useState(savedState?.duration ?? 0)
 
   let [selectedCard, setSelectedCard] = useState()
   let [hasStarted, setHasStarted] = useState(false)
 
-  let [duration, setDuration] = useState(0)
   let { score, stock, waste, foundations, tableaux, drawMode } = state[historyIndex]
 
   let checkIsGameOver = (foundations) => foundations.every((f) => f.length === 13)
@@ -339,9 +352,9 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
 
   useEffect(() => {
     if (hasStarted) {
-      updateSavedState(state)
+      updateSavedState({ gameState: state, historyIndex, duration })
     }
-  }, [state])
+  }, [state, historyIndex, duration])
 
   function handleCardDoubleClick(card) {
     if (!hasStarted) {
@@ -390,15 +403,58 @@ function KlondikeSolitaire({ scores, updateScores, onNewGame, initialDrawMode, s
           New Game
         </Button>
       </GameOverModal>
+      <div className="flex justify-start gap-4">
+        <Button onClick={onNewGame} className="bg-black hover:bg-zinc-800 text-white font-bold">
+          New Game
+        </Button>
+        <Button
+          className="flex-grow md:flex-grow-0"
+          onClick={(e) => {
+            setSettings((s) => {
+              return { ...s, drawMode: 1 }
+            })
+            onNewGame()
+          }}
+          disabled={drawMode === 1}
+        >
+          Draw 1
+        </Button>
+        <Button
+          className="flex-grow md:flex-grow-0"
+          onClick={(e) => {
+            setSettings((s) => {
+              return { ...s, drawMode: 3 }
+            })
+            onNewGame()
+          }}
+          disabled={drawMode === 3}
+        >
+          Draw 3
+        </Button>
+      </div>
       <p className="flex gap-4 items-center justify-center mb-4">
         <span>Score: {score}</span> <span className="tabular-nums">Duration: {duration}</span>
         <Button
+          className="px-2"
           onClick={() => {
             setHistoryIndex((c) => (c === 0 ? 0 : c - 1))
           }}
           disabled={historyIndex === 0}
         >
-          undo
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
         </Button>
       </p>
       <div

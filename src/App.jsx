@@ -21,7 +21,8 @@ function App() {
   const openStatsScreen = () => setShowStats(true)
   const closeStatsScreen = () => setShowStats(false)
 
-  const reset = () => {
+  const reset = async (cb) => {
+    if (cb && typeof cb === 'function') await cb()
     setSavedGame(null)
     setVersion((v) => v + 1)
   }
@@ -53,35 +54,6 @@ function App() {
           </svg>
         </button>
       </div>
-      <div className="flex justify-start gap-4">
-        <Button onClick={reset} className="bg-black hover:bg-zinc-800 text-white font-bold">
-          New Game
-        </Button>
-        <Button
-          className="flex-grow md:flex-grow-0"
-          onClick={(e) => {
-            setSettings((s) => {
-              return { ...s, drawMode: 1 }
-            })
-            reset()
-          }}
-          disabled={settings.drawMode === 1}
-        >
-          Draw 1
-        </Button>
-        <Button
-          className="flex-grow md:flex-grow-0"
-          onClick={(e) => {
-            setSettings((s) => {
-              return { ...s, drawMode: 3 }
-            })
-            reset()
-          }}
-          disabled={settings.drawMode === 3}
-        >
-          Draw 3
-        </Button>
-      </div>
       <KlondikeSolitaire
         key={version}
         updateScores={addScore}
@@ -90,6 +62,7 @@ function App() {
         initialDrawMode={settings.drawMode}
         savedState={savedGame}
         updateSavedState={setSavedGame}
+        setSettings={setSettings}
       />
       <StatisticsScreen isOpen={showStats} scores={scores} close={closeStatsScreen} />
       <ReloadPrompt />
