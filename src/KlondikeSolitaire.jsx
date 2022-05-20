@@ -311,6 +311,7 @@ function klondikeReducer(state, action) {
 function KlondikeSolitaire({
   scores,
   updateScores,
+  updateGamesPlayed,
   onNewGame,
   initialDrawMode,
   savedState,
@@ -404,7 +405,15 @@ function KlondikeSolitaire({
         </Button>
       </GameOverModal>
       <div className="flex gap-4">
-        <Button onClick={onNewGame} className="bg-black hover:bg-zinc-800 text-white font-bold">
+        <Button
+          onClick={() => {
+            if (hasStarted) {
+              updateGamesPlayed(drawMode)
+            }
+            onNewGame()
+          }}
+          className="bg-black hover:bg-zinc-800 text-white font-bold"
+        >
           New Game
         </Button>
         <Button
@@ -413,6 +422,9 @@ function KlondikeSolitaire({
             setSettings((s) => {
               return { ...s, drawMode: 1 }
             })
+            if (hasStarted) {
+              updateGamesPlayed(drawMode)
+            }
             onNewGame()
           }}
           disabled={drawMode === 1}
@@ -425,6 +437,9 @@ function KlondikeSolitaire({
             setSettings((s) => {
               return { ...s, drawMode: 3 }
             })
+            if (hasStarted) {
+              updateGamesPlayed(drawMode)
+            }
             onNewGame()
           }}
           disabled={drawMode === 3}

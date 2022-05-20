@@ -7,9 +7,37 @@ import { StatisticsScreen } from './StatisticsScreen'
 
 function App() {
   let [scores, setScores] = useLocalStorage('klondike:scores', {
-    drawOne: [],
-    drawThree: [],
+    drawOne: {
+      scores: [],
+      bestScore: null,
+      gamesPlayed: 0,
+      gamesWon: 0,
+    },
+    drawThree: {
+      scores: [],
+      bestScore: null,
+      gamesPlayed: 0,
+      gamesWon: 0,
+    },
   })
+  // Check for old version of statistics that only stored the last 10 wins
+  if (Array.isArray(scores.drawOne)) {
+    let newStats = {
+      drawOne: {
+        scores: [...scores.drawOne],
+        gamesPlayed: scores.drawOne.length,
+        gamesWon: scores.drawOne.length,
+        bestScore: Math.max(...scores.drawOne.map((score) => score.score)),
+      },
+      drawThree: {
+        scores: [...scores.drawThree],
+        gamesPlayed: scores.drawThree.length,
+        gamesWon: scores.drawThree.length,
+        bestScore: Math.max(...scores.drawThree.map((score) => score.score)),
+      },
+    }
+    setScores(newStats)
+  }
   let [settings, setSettings] = useLocalStorage('klondike:settings', {
     drawMode: 3,
   })
@@ -26,18 +54,48 @@ function App() {
     setSavedGame(null)
     setVersion((v) => v + 1)
   }
-  const addScore = (score) =>
+  const addScore = (newScore) =>
     setScores((s) => {
-      return score.drawMode === 1
+      return newScore.drawMode === 1
         ? {
             ...s,
-            drawOne: [score, ...s.drawOne.slice(0, 9)],
+            drawOne: {
+              scores: [newScore, ...s.drawOne.scores.slice(0, 9)],
+              gamesPlayed: s.drawOne.gamesPlayed + 1,
+              gamesWon: s.drawOne.gamesWon + 1,
+              bestScore: newScore.score > s.drawOne.bestScore ? newScore.score : s.drawOne.bestScore,
+            },
           }
         : {
             ...s,
-            drawThree: [score, ...s.drawThree.slice(0, 9)],
+            drawThree: {
+              scores: [newScore, ...s.drawThree.scores.slice(0, 9)],
+              gamesPlayed: s.drawThree.gamesPlayed + 1,
+              gamesWon: s.drawThree.gamesWon + 1,
+              bestScore: newScore.score > s.drawThree.bestScore ? newScore.score : s.drawThree.bestScore,
+            },
           }
     })
+
+  const addGamePlayed = (drawMode) => {
+    setScores((s) => {
+      return drawMode === 1
+        ? {
+            ...s,
+            drawOne: {
+              ...s.drawOne,
+              gamesPlayed: s.drawOne.gamesPlayed + 1,
+            },
+          }
+        : {
+            ...s,
+            drawThree: {
+              ...s.drawThree,
+              gamesPlayed: s.drawThree.gamesPlayed + 1,
+            },
+          }
+    })
+  }
   return (
     <div className="h-full flex flex-col space-y-4 pt-4 max-w-fit mx-auto md:px-8">
       <div className="flex justify-between gap-4 items-center">
@@ -57,6 +115,7 @@ function App() {
       <KlondikeSolitaire
         key={version}
         updateScores={addScore}
+        updateGamesPlayed={addGamePlayed}
         scores={scores}
         onNewGame={reset}
         initialDrawMode={settings.drawMode}

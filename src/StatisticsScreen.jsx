@@ -22,8 +22,28 @@ export function StatisticsScreen({ scores, isOpen, close }) {
             Draw 3
           </Button>
         </div>
-        <h2 className="font-bold text-center text-xl">Last 10 Games</h2>
-        <table className="w-full text-center mb-4">
+        <div className="flex gap-4 justify-center">
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-lg">
+              {drawMode === 1 ? scores.drawOne.gamesPlayed : scores.drawThree.gamesPlayed}
+            </span>
+            <span>Played</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-lg">
+              {drawMode === 1 ? scores.drawOne.gamesWon : scores.drawThree.gamesWon}
+            </span>
+            <span>Won</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <span className="font-bold text-lg">
+              {drawMode === 1 ? scores.drawOne.bestScore : scores.drawThree.bestScore}
+            </span>
+            <span>Best Score</span>
+          </div>
+        </div>
+        <h2 className="font-bold text-center text-xl">Last 10 Wins</h2>
+        <table className="w-full text-center">
           <thead>
             <tr>
               <th>Score</th>
@@ -33,7 +53,7 @@ export function StatisticsScreen({ scores, isOpen, close }) {
           </thead>
           <tbody className="divide-y">
             {drawMode === 1
-              ? scores.drawOne.map((score, i) => {
+              ? scores.drawOne.scores.map((score, i) => {
                   return (
                     <tr key={i}>
                       <td>{score.score}</td>
@@ -44,7 +64,7 @@ export function StatisticsScreen({ scores, isOpen, close }) {
                 })
               : null}
             {drawMode === 3
-              ? scores.drawThree.map((score, i) => {
+              ? scores.drawThree.scores.map((score, i) => {
                   return (
                     <tr key={i}>
                       <td>{score.score}</td>
